@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+website/node_modules/
+backend/node_modules/
+
+# Next.js
+website/.next/
+website/out/
+
+# Environment
+backend/.env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+*.zip
+backend-deploy.zip
+website-deploy.zip
+
+# IDE
+.vscode/
+.idea/
+
+# Uploads (keep folder structure)
+backend/uploads/*.jpg
+backend/uploads/*.png
+backend/uploads/*.jpeg
+backend/uploads/*.gif
+!backend/uploads/.gitkeep
+
+# Kiro
+.kiro/
