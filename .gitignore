@@ -32,5 +32,9 @@ backend/uploads/*.jpeg
 backend/uploads/*.gif
 !backend/uploads/.gitkeep
 
+# Private docs (keep locally, not on GitHub)
+website/GITHUB-SUSPENSION-REPORT.md
+website/HOSTINGER-DEPLOYMENT-GUIDE.md
+
 # Kiro
 .kiro/
