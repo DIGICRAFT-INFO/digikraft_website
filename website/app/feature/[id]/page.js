@@ -296,7 +296,7 @@ export default function ProjectDetail() {
   const fetchProjectData = async () => {
     try {
       // Fetching all projects to easily get related ones by category
-      const response = await fetch("http://localhost:5000/api/projects");
+      const response = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/projects");
       if (response.ok) {
         const allProjects = await response.json();
         

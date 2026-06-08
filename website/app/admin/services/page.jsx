@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "./Services.module.css";
+import styles from "./services.module.css";
 
 export default function ServicesAdmin() {
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export default function ServicesAdmin() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/services-section");
+        const res = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/services-section");
         const json = await res.json();
         if (json.success && json.data) {
           const data = Array.isArray(json.data) ? json.data[0] : json.data;
@@ -66,7 +66,7 @@ export default function ServicesAdmin() {
 
     setSaving(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/services-section/${sectionId}`, {
+      const res = await fetch(`https://aqua-pigeon-679923.hostingersite.com/api/services-section/${sectionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

@@ -10,7 +10,7 @@ export default function Footer1() {
   useEffect(() => {
     const fetchFooterData = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/pages/homepage");
+        const res = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/pages/homepage");
         const json = await res.json();
         if (json.success && json.data && json.data.footer) {
           setFooterData(json.data.footer);

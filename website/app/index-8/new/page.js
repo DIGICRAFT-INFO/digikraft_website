@@ -1,12 +1,2 @@
-import ServiceOfferings from "@/components/elements/ServiceOfferings";
-import React from "react";
-
-function page() {
-  return (
-    <div>
-      <ServiceOfferings />
-    </div>
-  );
-}
-
-export default page;
+import { redirect } from 'next/navigation';
+export default function Page() { redirect('/'); }

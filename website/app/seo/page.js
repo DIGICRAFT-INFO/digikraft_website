@@ -407,7 +407,7 @@ export default function Home() {
 
     try {
       // Persist URL submission to admin panel (fire-and-forget)
-      axios.post("http://localhost:5000/api/seo-submissions", { url }).catch(() => {});
+      axios.post("https://aqua-pigeon-679923.hostingersite.com/api/seo-submissions", { url }).catch(() => {});
 
       const response = await axios.post(
         "https://dks-backend-jg53.vercel.app/api/pagespeed/analyze",

@@ -42,8 +42,8 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "http://localhost:5000/api";
-  const UPLOADS_URL = "http://localhost:5000/uploads";
+  const API = "https://aqua-pigeon-679923.hostingersite.com/api";
+  const UPLOADS_URL = "https://aqua-pigeon-679923.hostingersite.com/uploads";
 
   useEffect(() => {
     setMounted(true);

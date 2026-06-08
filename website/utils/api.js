@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://aqua-pigeon-679923.hostingersite.com/api",
 });
 
 // Token Automatically Add

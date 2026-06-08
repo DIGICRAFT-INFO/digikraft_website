@@ -18,7 +18,7 @@ export default function UserManagementPanel() {
   const [uploadingImage, setUploadingImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  const UPLOADS_URL = "http://localhost:5000/uploads";
+  const UPLOADS_URL = "https://aqua-pigeon-679923.hostingersite.com/uploads";
 
   useEffect(() => {
     const role = localStorage.getItem("role");

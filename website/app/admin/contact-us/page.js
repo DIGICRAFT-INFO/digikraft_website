@@ -30,7 +30,7 @@ export default function Contact() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/enquiry/send",
+        "https://aqua-pigeon-679923.hostingersite.com/api/enquiry/send",
         {
           method: "POST",
           headers: {

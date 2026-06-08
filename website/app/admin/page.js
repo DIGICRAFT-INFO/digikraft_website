@@ -34,7 +34,7 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "http://localhost:5000/api";
+  const API = "https://aqua-pigeon-679923.hostingersite.com/api";
 
   useEffect(() => {
     setMounted(true);
@@ -187,7 +187,7 @@ const Dashboard = () => {
                         <div className="post-info">
                           {post.image ? (
                             <img
-                              src={`http://localhost:5000/uploads/${post.image}`}
+                              src={`https://aqua-pigeon-679923.hostingersite.com/uploads/${post.image}`}
                               alt={post.title}
                             />
                           ) : (
