@@ -14,6 +14,20 @@ const {
 router.post("/register", register);
 router.post("/login", login);
 
+// Verify user is still active (called by frontend every 30s)
+router.get("/verify", require("../middleware/authMiddleware"), async (req, res) => {
+  try {
+    const User = require("../models/User");
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(403).json({ valid: false, message: "User not found" });
+    }
+    res.json({ valid: true, role: user.role, name: user.name });
+  } catch (error) {
+    res.status(403).json({ valid: false, message: "Verification failed" });
+  }
+});
+
 // CRUD Routes for Users
 router.get("/", getAllUsers);          
 router.get("/:id", getUserById);        
