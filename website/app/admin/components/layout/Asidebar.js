@@ -91,6 +91,13 @@ const Asidebar = () => {
       link: "/admin/seo",
       roles: ["superadmin", "admin"],
     },
+    {
+      id: "slides",
+      name: "Slides/CMS",
+      icon: Layers,
+      link: "/admin/slides",
+      roles: ["superadmin", "admin"],
+    },
   ];
 
   const allBottomMenuItems = [

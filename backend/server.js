@@ -32,6 +32,7 @@ app.use("/api/integrations", require("./routes/socialIntegrationRoutes"));
 app.use("/api/telegram", require("./routes/telegramRoutes"));
 app.use("/api/messaging", require("./routes/socialMessagingRoutes"));
 app.use("/api/logs", require("./routes/activityLogRoutes"));
+app.use("/api/slides", require("./routes/slideRoutes"));
 
 mongoose
   .connect(process.env.MONGO_URI)

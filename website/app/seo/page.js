@@ -395,9 +395,39 @@ export default function Home() {
   const [seoSuggestions, setSeoSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [leadForm, setLeadForm] = useState({ name: "", number: "", email: "", purpose: "" });
+  const [leadSubmitted, setLeadSubmitted] = useState(false);
+
+  const handleLeadSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post("https://aqua-pigeon-679923.hostingersite.com/api/seo-submissions", {
+        url,
+        notes: `Name: ${leadForm.name} | Phone: ${leadForm.number} | Email: ${leadForm.email} | Purpose: ${leadForm.purpose === "Other" ? leadForm.otherPurpose || "Other" : leadForm.purpose}`,
+      });
+      setLeadSubmitted(true);
+      setShowLeadForm(false);
+      // Auto-trigger analysis after form submit
+      setTimeout(() => {
+        document.getElementById("seo-analyze-btn")?.click();
+      }, 100);
+    } catch (err) {
+      setLeadSubmitted(true);
+      setShowLeadForm(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!url.trim()) return;
+
+    // Show lead form first
+    if (!leadSubmitted) {
+      setShowLeadForm(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setPerformanceData(null);
@@ -406,9 +436,7 @@ export default function Home() {
     setSeoSuggestions([]);
 
     try {
-      // Persist URL submission to admin panel (fire-and-forget)
-      axios.post("https://aqua-pigeon-679923.hostingersite.com/api/seo-submissions", { url }).catch(() => {});
-
+      // Lead form already saved the submission
       const response = await axios.post(
         "https://dks-backend-jg53.vercel.app/api/pagespeed/analyze",
         { url },
@@ -520,6 +548,7 @@ export default function Home() {
                     </motion.div>
                     <motion.div className="col-md-3" variants={itemVariants}>
                       <motion.button
+                        id="seo-analyze-btn"
                         type="submit"
                         disabled={loading}
                         className={`btn bg-neon-green text-neon-green font-orbitron fw-semibold py-3 w-100 hover-neon rounded-lg ${
@@ -536,6 +565,65 @@ export default function Home() {
                     </motion.div>
                   </div>
                 </motion.form>
+
+                {/* Lead Capture Form Modal */}
+                <AnimatePresence>
+                  {showLeadForm && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: "20px" }}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.9, opacity: 0 }}
+                        style={{ background: "#111", borderRadius: "16px", padding: "32px", maxWidth: "440px", width: "100%", border: "1px solid #8ee01344" }}
+                      >
+                        <h3 style={{ color: "#8ee013", fontSize: "20px", fontWeight: "700", marginBottom: "4px" }}>Almost There! 🚀</h3>
+                        <p style={{ color: "#9ca3af", fontSize: "13px", marginBottom: "20px" }}>Fill in your details to get your free SEO analysis report.</p>
+                        
+                        <form onSubmit={handleLeadSubmit}>
+                          <div style={{ marginBottom: "12px" }}>
+                            <input type="text" placeholder="Your Name" value={leadForm.name} onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+                          </div>
+                          <div style={{ marginBottom: "12px" }}>
+                            <input type="tel" placeholder="Phone Number (optional)" value={leadForm.number} onChange={(e) => setLeadForm({ ...leadForm, number: e.target.value })} style={{ width: "100%", padding: "12px 16px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+                          </div>
+                          <div style={{ marginBottom: "12px" }}>
+                            <input type="email" placeholder="Email (optional)" value={leadForm.email} onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })} style={{ width: "100%", padding: "12px 16px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+                          </div>
+                          <div style={{ marginBottom: "12px" }}>
+                            <select value={leadForm.purpose} onChange={(e) => setLeadForm({ ...leadForm, purpose: e.target.value })} required style={{ width: "100%", padding: "12px 16px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", color: leadForm.purpose ? "#fff" : "#6b7280", fontSize: "14px", outline: "none", boxSizing: "border-box" }}>
+                              <option value="">Select Purpose *</option>
+                              <option value="SEO Audit">SEO Audit</option>
+                              <option value="Website Speed Optimization">Website Speed Optimization</option>
+                              <option value="Digital Marketing">Digital Marketing</option>
+                              <option value="Website Development">Website Development</option>
+                              <option value="Just Checking">Just Checking</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </div>
+                          {leadForm.purpose === "Other" && (
+                            <div style={{ marginBottom: "16px" }}>
+                              <textarea placeholder="Please describe your purpose..." value={leadForm.otherPurpose || ""} onChange={(e) => setLeadForm({ ...leadForm, otherPurpose: e.target.value })} required style={{ width: "100%", padding: "12px 16px", background: "#1a1a1a", border: "1px solid #333", borderRadius: "8px", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box", minHeight: "80px", resize: "vertical" }} />
+                            </div>
+                          )}
+                          <div style={{ display: "flex", gap: "10px" }}>
+                            <button type="submit" style={{ flex: 1, padding: "12px", background: "#8ee013", color: "#000", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer" }}>
+                              Analyze Now →
+                            </button>
+                            <button type="button" onClick={() => setShowLeadForm(false)} style={{ padding: "12px 16px", background: "transparent", color: "#6b7280", border: "1px solid #333", borderRadius: "8px", fontSize: "13px", cursor: "pointer" }}>
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Error Message */}
 
                 {/* if loading is present then show preeLoader  */}
