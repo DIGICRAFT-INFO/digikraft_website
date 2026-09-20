@@ -11,7 +11,7 @@ const POSITIONS = [
   { value: "bottom-left", label: "◺" }, { value: "bottom-center", label: "▾" }, { value: "bottom-right", label: "◿" },
 ];
 
-const UPLOADS_URL = "https://aqua-pigeon-679923.hostingersite.com/uploads";
+const UPLOADS_URL = "https://backend.digikraftsocial.com/uploads";
 
 export default function SlidesPage() {
   const [slides, setSlides] = useState([]);

@@ -42,8 +42,8 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "https://aqua-pigeon-679923.hostingersite.com/api";
-  const UPLOADS_URL = "https://aqua-pigeon-679923.hostingersite.com/uploads";
+  const API = "https://backend.digikraftsocial.com/api";
+  const UPLOADS_URL = "https://backend.digikraftsocial.com/uploads";
 
   useEffect(() => {
     setMounted(true);

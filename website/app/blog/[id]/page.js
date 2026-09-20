@@ -295,7 +295,7 @@ export default function BlogDetails({ params }) {
         setLoading(true);
         setApiError(null);
         
-        const res = await axios.get(`https://aqua-pigeon-679923.hostingersite.com/api/posts/${cleanId}`);
+        const res = await axios.get(`https://backend.digikraftsocial.com/api/posts/${cleanId}`);
         setBlogPost(res.data);
       } catch (error) {
         console.error("Error fetching blog details:", error);
@@ -367,7 +367,7 @@ export default function BlogDetails({ params }) {
                   <div className="box-image-header" style={{ marginBottom: "30px" }}>
                     <img
                       alt={blogPost.title}
-                      src={`https://aqua-pigeon-679923.hostingersite.com/uploads/${blogPost.image}`}
+                      src={`https://backend.digikraftsocial.com/uploads/${blogPost.image}`}
                       style={{ width: "100%", maxHeight: "500px", objectFit: "cover", borderRadius: "16px" }}
                     />
                   </div>

@@ -30,7 +30,7 @@ export default function PageManager() {
 
   const fetchPageData = async () => {
     try {
-      const res = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/pages/homepage");
+      const res = await fetch("https://backend.digikraftsocial.com/api/pages/homepage");
       const json = await res.json();
       if (json.success && json.data) {
         setPageData(json.data);
@@ -44,7 +44,7 @@ export default function PageManager() {
 
   const updatePageInDB = async () => {
     try {
-      const res = await fetch(`https://aqua-pigeon-679923.hostingersite.com/api/pages/homepage`, {
+      const res = await fetch(`https://backend.digikraftsocial.com/api/pages/homepage`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pageData),

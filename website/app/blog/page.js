@@ -53,7 +53,7 @@ export default function Blog() {
     const fetchPosts = async () => {
       try {
         // Aapki posts API backend endpoint
-        const res = await axios.get("https://aqua-pigeon-679923.hostingersite.com/api/posts");
+        const res = await axios.get("https://backend.digikraftsocial.com/api/posts");
         setPosts(res.data);
       } catch (error) {
         console.error("Error fetching posts:", error);

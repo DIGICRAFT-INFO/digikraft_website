@@ -30,7 +30,7 @@ export default function Contact() {
 
     try {
       const response = await fetch(
-        "https://aqua-pigeon-679923.hostingersite.com/api/enquiry/send",
+        "https://backend.digikraftsocial.com/api/enquiry/send",
         {
           method: "POST",
           headers: {
@@ -111,7 +111,7 @@ export default function Contact() {
                           <div className="card-info">
                             <h3 className="text-22-bold">Address</h3>
                             <p className="text-md neutral-700">
-                              Anand Nagar, Telibandha, Raipur, Chhattisgarh 492001
+                              Raipur, Chhattisgarh 492001
                             </p>
                           </div>
                         </div>

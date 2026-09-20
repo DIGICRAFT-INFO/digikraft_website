@@ -370,7 +370,7 @@ export default function Contact() {
 
     try {
       const response = await fetch(
-        "https://aqua-pigeon-679923.hostingersite.com/api/enquiry/send",
+        "https://backend.digikraftsocial.com/api/enquiry/send",
         {
           method: "POST",
           headers: {

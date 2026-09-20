@@ -52,6 +52,31 @@
   flex-shrink: 0;
 }
 
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  margin-bottom: 6px;
+  flex-shrink: 0;
+}
+
+.role-switcher-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.role-select {
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #374151;
+}
+
 .nav-menu {
   display: flex;
   flex-direction: column;

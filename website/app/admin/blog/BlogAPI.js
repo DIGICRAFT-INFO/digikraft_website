@@ -1,5 +1,5 @@
 // components/BlogAPI.js
-const BASE_URL = 'https://aqua-pigeon-679923.hostingersite.com/api';
+const BASE_URL = 'https://backend.digikraftsocial.com/api';
 
 const getHeaders = (isFormData = false) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

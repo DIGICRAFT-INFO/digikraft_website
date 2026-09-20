@@ -79,7 +79,7 @@ export default function ProjectsPage() {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const API_URL = "https://aqua-pigeon-679923.hostingersite.com/api/projects";
+  const API_URL = "https://backend.digikraftsocial.com/api/projects";
 
   useEffect(() => {
     fetchProjects();

@@ -18,7 +18,7 @@ export default function ContactManagement() {
     imageLink: ""
   });
 
-  const API_URL = "https://aqua-pigeon-679923.hostingersite.com/api/contact-info";
+  const API_URL = "https://backend.digikraftsocial.com/api/contact-info";
 
   // Fetch all contacts
   const fetchContacts = async () => {

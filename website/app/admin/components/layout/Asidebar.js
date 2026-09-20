@@ -33,6 +33,15 @@ const Asidebar = () => {
     setUserRole(role);
   }, []);
 
+  // Allow quick role switching from the sidebar for debugging/local use
+  const handleRoleChange = (e) => {
+    const newRole = e.target.value;
+    localStorage.setItem("role", newRole);
+    setUserRole(newRole);
+    // notify other windows/tabs
+    window.dispatchEvent(new Event("storage"));
+  };
+
   // All menu items with role access
   const allMainMenuItems = [
     {
@@ -183,12 +192,20 @@ const Asidebar = () => {
 
       {/* ── Logo ── */}
       <div className="logo-section">
-        <span className="logo-text">
-          <img
-            src="https://demo.digikraftsocial.com/public/uploads/logo_digifoot.png"
-            alt="DigiKraft Logo"
-          />
-        </span>
+          <span className="logo-text">
+            <img src="/assets/imgs/template/logo.png" alt="DigiKraft Logo" />
+          </span>
+      </div>
+
+      {/* Role switcher (helpful when testing/admin setup) */}
+      <div className="role-switcher">
+        <label className="role-switcher-label">Role:</label>
+        <select className="role-select" value={userRole} onChange={handleRoleChange}>
+          <option value="user">user</option>
+          <option value="author">author</option>
+          <option value="admin">admin</option>
+          <option value="superadmin">superadmin</option>
+        </select>
       </div>
 
       {/* ── Main Nav ── */}

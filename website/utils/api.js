@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://aqua-pigeon-679923.hostingersite.com/api",
+  baseURL: "https://backend.digikraftsocial.com/api",
 });
 
 // Token Automatically Add

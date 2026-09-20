@@ -15,6 +15,17 @@ const nextConfig = {
       },
     ],
   },
+  // 🚀 Yahan humne redirects add kar diye hain
+  async redirects() {
+    return [
+      {
+        source: '/company',
+        destination: 'https://www.digikraftsocial.com/',
+        permanent: true, // SEO ke liye 301 redirect
+      },
+     
+    ];
+  },
 };
 
 module.exports = nextConfig;

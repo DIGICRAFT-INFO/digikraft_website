@@ -9,7 +9,7 @@ export default function EnquiryCMS() {
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [unreadIds, setUnreadIds] = useState([]);
 
-  const API_URL = "https://aqua-pigeon-679923.hostingersite.com/api/enquiry";
+  const API_URL = "https://backend.digikraftsocial.com/api/enquiry";
 
   const fetchEnquiries = async () => {
     setLoading(true);

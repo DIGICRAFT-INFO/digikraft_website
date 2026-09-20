@@ -19,7 +19,7 @@ const Header = () => {
   });
 
   // Local Backend URL endpoint configuration
-  const API_URL = "https://aqua-pigeon-679923.hostingersite.com/api/enquiry/send";
+  const API_URL = "https://backend.digikraftsocial.com/api/enquiry/send";
 
   const checkNewEnquiries = async () => {
     try {

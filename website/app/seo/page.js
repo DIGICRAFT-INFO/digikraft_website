@@ -402,7 +402,7 @@ export default function Home() {
   const handleLeadSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("https://aqua-pigeon-679923.hostingersite.com/api/seo-submissions", {
+      await axios.post("https://backend.digikraftsocial.com/api/seo-submissions", {
         url,
         notes: `Name: ${leadForm.name} | Phone: ${leadForm.number} | Email: ${leadForm.email} | Purpose: ${leadForm.purpose === "Other" ? leadForm.otherPurpose || "Other" : leadForm.purpose}`,
       });

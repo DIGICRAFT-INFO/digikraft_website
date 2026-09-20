@@ -34,7 +34,7 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "https://aqua-pigeon-679923.hostingersite.com/api";
+  const API = "https://backend.digikraftsocial.com/api";
 
   useEffect(() => {
     setMounted(true);
@@ -187,7 +187,7 @@ const Dashboard = () => {
                         <div className="post-info">
                           {post.image ? (
                             <img
-                              src={`https://aqua-pigeon-679923.hostingersite.com/uploads/${post.image}`}
+                              src={`https://backend.digikraftsocial.com/uploads/${post.image}`}
                               alt={post.title}
                             />
                           ) : (

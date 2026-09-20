@@ -7,10 +7,7 @@ backend/node_modules/
 website/.next/
 website/out/
 
-# Environment
-backend/.env
-.env
-.env.local
+
 
 # OS
 .DS_Store

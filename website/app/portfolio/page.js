@@ -185,7 +185,7 @@ export default function Portfolio() {
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        const response = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/projects");
+        const response = await fetch("https://backend.digikraftsocial.com/api/projects");
         const data = await response.json();
         setProjects(data);
       } catch (error) {

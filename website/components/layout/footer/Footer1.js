@@ -10,7 +10,7 @@ export default function Footer1() {
   useEffect(() => {
     const fetchFooterData = async () => {
       try {
-        const res = await fetch("https://aqua-pigeon-679923.hostingersite.com/api/pages/homepage");
+        const res = await fetch("https://backend.digikraftsocial.com/api/pages/homepage");
         const json = await res.json();
         if (json.success && json.data && json.data.footer) {
           setFooterData(json.data.footer);
@@ -53,7 +53,7 @@ export default function Footer1() {
 
   // Fallbacks while loading or if data is missing
   const logo = footerData?.logo || "/assets/imgs/template/logo.png";
-  const address = footerData?.address || "Anand Nagar, Telibandha, Raipur, Chhattisgarh 492001";
+  const address = footerData?.address || "Raipur, Chhattisgarh 492001";
   const operatingHours = footerData?.operatingHours || "Hours: 10:00 - 19:00, Mon - Sat";
 
   return (

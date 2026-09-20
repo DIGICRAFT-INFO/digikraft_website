@@ -11,7 +11,7 @@ export default function AboutDashboard() {
   const [formData, setFormData] = useState({ year: "", heading: "", description: "" });
   const [editId, setEditId] = useState(null);
 
-  const API_URL = "https://aqua-pigeon-679923.hostingersite.com/api/about";
+  const API_URL = "https://backend.digikraftsocial.com/api/about";
 
   // Fetch entries from backend
   const fetchEntries = async () => {
