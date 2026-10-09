@@ -9,6 +9,7 @@ const urban = Urbanist({
   subsets: ["latin"],
   variable: "--tg-body-font-family",
   display: "swap",
+  preload: false,
 });
 export const metadata = {
   title: "Digikraft Social - Empowering Brands Digitally",

@@ -1,5 +1,11 @@
 node_modules/
 
+# Environment — NEVER push
+.env
+.env.production
+.env.*
+!.env.*.example
+
 uploads/*.jpg
 uploads/*.png
 uploads/*.jpeg

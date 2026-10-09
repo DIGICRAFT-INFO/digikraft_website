@@ -42,8 +42,8 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "https://backend.digikraftsocial.com/api";
-  const UPLOADS_URL = "https://backend.digikraftsocial.com/uploads";
+  const API = process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api` : "https://backend.digikraftsocial.com/api";
+  const UPLOADS_URL = process.env.NEXT_PUBLIC_BACKEND_URL ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads` : "https://backend.digikraftsocial.com/uploads";
 
   useEffect(() => {
     setMounted(true);

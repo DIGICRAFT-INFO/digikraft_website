@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com";
+
 const API = axios.create({
-  baseURL: "https://backend.digikraftsocial.com/api",
+  baseURL: `${BASE}/api`,
 });
 
 // Token Automatically Add

@@ -1,5 +1,5 @@
 // components/BlogAPI.js
-const BASE_URL = 'https://backend.digikraftsocial.com/api';
+const BASE_URL = (typeof window !== 'undefined' ? (window.__NEXT_PUBLIC_BACKEND_URL__ || '') : (process.env.NEXT_PUBLIC_BACKEND_URL || '')) + '/api' || 'https://backend.digikraftsocial.com/api';
 
 const getHeaders = (isFormData = false) => {
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;

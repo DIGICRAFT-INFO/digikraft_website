@@ -1,0 +1,13 @@
+const router = require('express').Router();
+const ctrl = require('../../controllers/crm/crmInvoiceController');
+const { crmAuth, crmManagerOrAbove, crmFinanceOrAbove } = require('../../middleware/crmAuth');
+
+router.use(crmAuth);
+router.get('/', crmFinanceOrAbove, ctrl.list);
+router.get('/:id', crmFinanceOrAbove, ctrl.getOne);
+router.post('/', crmManagerOrAbove, ctrl.create);
+router.patch('/:id', crmManagerOrAbove, ctrl.update);
+router.put('/:id', crmManagerOrAbove, ctrl.update);
+router.delete('/:id', crmManagerOrAbove, ctrl.remove);
+
+module.exports = router;
