@@ -30,6 +30,10 @@ const crmUserSchema = new mongoose.Schema(
     page_access: { type: [String], default: [] },
     access_granted_by: { type: String, ref: 'CrmUser', default: null },
     access_granted_at: { type: Date, default: null },
+    // ✅ Brute-force lockout fields (matching HRM/EMP pattern)
+    login_attempts: { type: Number, default: 0 },
+    locked_until:   { type: Date,   default: null },
+    last_login:     { type: Date,   default: null },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

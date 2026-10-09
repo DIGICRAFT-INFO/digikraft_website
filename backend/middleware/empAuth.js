@@ -13,29 +13,32 @@ const empAuth = async (req, res, next) => {
       return res.status(401).json({ message: 'No token provided' });
 
     const token = header.split(' ')[1];
+
+    // ✅ Use portal-specific secret — EMP tokens signed with JWT_EMP_SECRET
+    const secret = process.env.JWT_EMP_SECRET || process.env.JWT_SECRET;
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      decoded = jwt.verify(token, secret);
     } catch (e) {
       return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
-    // Portal claim — prevent HRM/CRM tokens leaking in
+    // ✅ Portal isolation — reject HRM/CRM tokens
     if (decoded.portal !== 'emp')
       return res.status(401).json({ message: 'Invalid portal token' });
 
     const employee = await HrmEmployee.findById(decoded.id)
-      .populate('department', 'name')
+      .populate('department',  'name')
       .populate('designation', 'title')
       .populate('reporting_manager', 'full_name work_email')
       .lean();
 
-    if (!employee)         return res.status(401).json({ message: 'Employee not found' });
-    if (!employee.is_active) return res.status(403).json({ message: 'Account disabled' });
+    if (!employee)           return res.status(401).json({ message: 'Employee not found' });
+    if (!employee.is_active) return res.status(403).json({ message: 'Account disabled. Contact HR.' });
 
-    // Account lockout
+    // ✅ Brute-force lockout check
     if (employee.locked_until && new Date(employee.locked_until) > new Date())
-      return res.status(423).json({ message: 'Account temporarily locked' });
+      return res.status(423).json({ message: 'Account temporarily locked. Try later.' });
 
     req.empUser  = employee;
     req.clientIP = getIP(req);
@@ -45,8 +48,6 @@ const empAuth = async (req, res, next) => {
   }
 };
 
-// EMP portal has only one role — employee.
-// This guard is a placeholder for future employee sub-roles.
 const empSelf = (req, res, next) => next();
 
 module.exports = { empAuth, empSelf };

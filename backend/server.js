@@ -1,62 +1,126 @@
-const express = require("express");
-const cors = require("cors");
+const express      = require("express");
+const cors         = require("cors");
 const cookieParser = require("cookie-parser");
-const dotenv = require("dotenv");
-const connectDB = require("./config/db.js"); // ✅ Fixed: db.js is in config/
+const dotenv       = require("dotenv");
+const helmet       = require("helmet");
+const mongoSanitize= require("express-mongo-sanitize");
+const hpp          = require("hpp");
+const connectDB    = require("./config/db.js");
 
 dotenv.config();
 
 const app = express();
 
-// ✅ Connect MongoDB
-connectDB();
+// ══════════════════════════════════════════════════════════════════
+// 0. TRUST PROXY  (needed for rate-limit + IP behind Nginx/Cloudflare)
+// ══════════════════════════════════════════════════════════════════
+app.set("trust proxy", 1);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ══════════════════════════════════════════════════════════════════
+// 1. HTTPS REDIRECT  (production only)
+// ══════════════════════════════════════════════════════════════════
+if (process.env.NODE_ENV === "production") {
+  app.use((req, res, next) => {
+    if (req.headers["x-forwarded-proto"] !== "https") {
+      return res.redirect(301, "https://" + req.headers.host + req.url);
+    }
+    next();
+  });
+}
 
-// ✅ CORS — CMS (digikraftsocial.com) + CRM (crm.digikraftsocial.com or same domain /crm)
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // server-to-server
-    const allowed = [
-      'https://digikraftsocial.com',
-      'https://www.digikraftsocial.com',
-      'https://crm.digikraftsocial.com',
-      'https://hrm.digikraftsocial.com',
-      'https://emp.digikraftsocial.com',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',').map(s => s.trim()) : []),
-    ];
-    if (allowed.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-}));
+// ══════════════════════════════════════════════════════════════════
+// 2. HELMET — HTTP security headers
+// ══════════════════════════════════════════════════════════════════
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // CSP is handled by Next.js frontend
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }, // allow /uploads images
+  })
+);
 
+// ══════════════════════════════════════════════════════════════════
+// 3. CORS
+// ══════════════════════════════════════════════════════════════════
+const ALLOWED_ORIGINS = [
+  "https://digikraftsocial.com",
+  "https://www.digikraftsocial.com",
+  "https://crm.digikraftsocial.com",
+  "https://hrm.digikraftsocial.com",
+  "https://emp.digikraftsocial.com",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  ...(process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
+    : []),
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // server-to-server / Postman (dev)
+      if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  })
+);
+
+// ══════════════════════════════════════════════════════════════════
+// 4. BODY PARSERS — with size limits to prevent DoS
+// ══════════════════════════════════════════════════════════════════
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+
+// ══════════════════════════════════════════════════════════════════
+// 5. NoSQL INJECTION SANITIZE — strip $ and . from req.body/params/query
+// ══════════════════════════════════════════════════════════════════
+app.use(mongoSanitize());
+
+// ══════════════════════════════════════════════════════════════════
+// 6. HTTP PARAMETER POLLUTION PREVENTION
+// ══════════════════════════════════════════════════════════════════
+app.use(hpp());
+
+// ══════════════════════════════════════════════════════════════════
+// 7. COOKIE PARSER
+// ══════════════════════════════════════════════════════════════════
 app.use(cookieParser());
+
+// ══════════════════════════════════════════════════════════════════
+// 8. STATIC FILES
+// ══════════════════════════════════════════════════════════════════
 app.use("/uploads", express.static("uploads"));
 
-// ======= CMS ROUTES (existing DigiKraft Social website admin) =======
-app.use("/api/auth", require("./routes/authRoutes"));
-app.use("/api/posts", require("./routes/postRoutes"));
-app.use("/api/categories", require("./routes/categoryRoutes"));
-app.use("/api/projects", require("./routes/projectsRoutes"));
-app.use("/api/pages", require("./routes/homepageRoutes"));
-app.use("/api/about", require("./routes/aboutRoutes.js"));
-app.use("/api/services-section", require("./routes/servicesRoutes.js"));
-app.use("/api/contact-info", require("./routes/contactInfoRoutes.js"));
-app.use("/api/enquiry", require("./routes/enquiryRoutes.js"));
-app.use("/api/seo-submissions", require("./routes/seoSubmissionRoutes"));
-app.use("/api/integrations", require("./routes/socialIntegrationRoutes"));
-app.use("/api/telegram", require("./routes/telegramRoutes"));
-app.use("/api/messaging", require("./routes/socialMessagingRoutes"));
-app.use("/api/logs", require("./routes/activityLogRoutes"));
-app.use("/api/slides", require("./routes/slideRoutes"));
+// ══════════════════════════════════════════════════════════════════
+// 9. DATABASE
+// ══════════════════════════════════════════════════════════════════
+connectDB();
 
-// ======= CRM ROUTES (DigiKraft Social internal CRM — separate login) =======
+// ══════════════════════════════════════════════════════════════════
+// 10. ROUTES
+// ══════════════════════════════════════════════════════════════════
+
+// ── CMS ─────────────────────────────────────────────────────────
+app.use("/api/auth",             require("./routes/authRoutes"));
+app.use("/api/posts",            require("./routes/postRoutes"));
+app.use("/api/categories",       require("./routes/categoryRoutes"));
+app.use("/api/projects",         require("./routes/projectsRoutes"));
+app.use("/api/pages",            require("./routes/homepageRoutes"));
+app.use("/api/about",            require("./routes/aboutRoutes.js"));
+app.use("/api/services-section", require("./routes/servicesRoutes.js"));
+app.use("/api/contact-info",     require("./routes/contactInfoRoutes.js"));
+app.use("/api/enquiry",          require("./routes/enquiryRoutes.js"));
+app.use("/api/seo-submissions",  require("./routes/seoSubmissionRoutes"));
+app.use("/api/integrations",     require("./routes/socialIntegrationRoutes"));
+app.use("/api/telegram",         require("./routes/telegramRoutes"));
+app.use("/api/messaging",        require("./routes/socialMessagingRoutes"));
+app.use("/api/logs",             require("./routes/activityLogRoutes"));
+app.use("/api/slides",           require("./routes/slideRoutes"));
+
+// ── CRM ─────────────────────────────────────────────────────────
 app.use("/api/crm/auth",          require("./routes/crm/crmAuthRoutes"));
 app.use("/api/crm/dashboard",     require("./routes/crm/crmDashboardRoutes"));
 app.use("/api/crm/clients",       require("./routes/crm/crmClientRoutes"));
@@ -72,7 +136,7 @@ app.use("/api/crm/notifications", require("./routes/crm/crmNotificationRoutes"))
 app.use("/api/crm/history",       require("./routes/crm/crmHistoryRoutes"));
 app.use("/api/crm/settings",      require("./routes/crm/crmSettingsRoutes"));
 
-// ======= HRM ROUTES (Human Resource Management — separate login) =======
+// ── HRM ─────────────────────────────────────────────────────────
 app.use("/api/hrm/auth",          require("./routes/hrm/hrmAuthRoutes"));
 app.use("/api/hrm/employees",     require("./routes/hrm/hrmEmployeeRoutes"));
 app.use("/api/hrm/org",           require("./routes/hrm/hrmDeptRoutes"));
@@ -85,74 +149,41 @@ app.use("/api/hrm/reports",       require("./routes/hrm/hrmReportRoutes"));
 app.use("/api/hrm/tasks",         require("./routes/hrm/hrmTaskRoutes"));
 app.use("/api/hrm",               require("./routes/hrm/hrmMiscRoutes"));
 
-// ======= EMP ROUTES (Employee Self-Service — separate login) =======
-app.use("/api/emp",               require("./routes/emp/empRoutes"));
+// ── EMP ─────────────────────────────────────────────────────────
+app.use("/api/emp", require("./routes/emp/empRoutes"));
 
-// ======= GLOBAL ERROR HANDLERS =======
+// ══════════════════════════════════════════════════════════════════
+// 11. GLOBAL ERROR HANDLERS
+// ══════════════════════════════════════════════════════════════════
 app.use((req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+  res.status(404).json({ message: "Route not found" });
 });
 
+// Production: never leak stack traces or internal messages
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
+  const isProd = process.env.NODE_ENV === "production";
+  const status = err.status || 500;
+
+  // Log full error server-side always
+  console.error(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} → ${status}`);
+  if (!isProd) console.error(err.stack);
+
+  res.status(status).json({
+    message: isProd && status === 500
+      ? "Internal server error"          // never expose internals in prod
+      : err.message || "Internal server error",
+  });
 });
 
+// ══════════════════════════════════════════════════════════════════
+// 12. START
+// ══════════════════════════════════════════════════════════════════
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`✅ DigiKraft Social Server running on port ${PORT}`);
-  console.log(`   CMS  → /api/*`);
-  console.log(`   CRM  → /api/crm/*`);
+  console.log(`✅ DigiKraft Social Server running on port ${PORT} [${process.env.NODE_ENV || "development"}]`);
+  console.log(`   Helmet:          ✅`);
+  console.log(`   Mongo-sanitize:  ✅`);
+  console.log(`   HPP:             ✅`);
+  console.log(`   Body limit:      10kb`);
+  console.log(`   HTTPS redirect:  ${process.env.NODE_ENV === "production" ? "✅" : "dev-off"}`);
 });
-
-
-
-
-
-
-// const express = require("express");
-// const mongoose = require("mongoose");
-// const dotenv = require("dotenv");
-// const cors = require("cors");
-// const cookieParser = require("cookie-parser");
-
-// dotenv.config();
-
-// const app = express();
-
-// app.use(express.json());
-// app.use(cors({
-//   origin: ['https://digikraftsocial.com', 'https://www.digikraftsocial.com', 'https://backend.digikraftsocial.com', 'http://localhost:3000'],
-//   credentials: true,
-// }));
-// app.use(cookieParser());
-
-// app.use("/uploads", express.static("uploads"));
-
-// app.use("/api/auth", require("./routes/authRoutes"));
-// app.use("/api/posts", require("./routes/postRoutes"));
-// app.use("/api/categories", require("./routes/categoryRoutes"));
-// app.use("/api/projects", require("./routes/projectsRoutes"));
-// app.use("/api/projects", require("./routes/homepageRoutes")); 
-// app.use("/api/pages",require("./routes/homepageRoutes"));
-// app.use("/api/about",require("./routes/aboutRoutes.js"));
-// app.use("/api/services-section",require("./routes/servicesRoutes.js"));
-// app.use("/api/contact-info",require("./routes/contactInfoRoutes.js"));
-// app.use("/api/enquiry",require("./routes/enquiryRoutes.js"));
-// app.use("/api/seo-submissions", require("./routes/seoSubmissionRoutes"));
-// app.use("/api/integrations", require("./routes/socialIntegrationRoutes"));
-// app.use("/api/telegram", require("./routes/telegramRoutes"));
-// app.use("/api/messaging", require("./routes/socialMessagingRoutes"));
-// app.use("/api/logs", require("./routes/activityLogRoutes"));
-// app.use("/api/slides", require("./routes/slideRoutes"));
-
-// mongoose
-//   .connect(process.env.MONGO_URI)
-//   .then(() => {
-//     console.log("MongoDB Connected");
-
-//     app.listen(process.env.PORT, () => {
-//       console.log(`Server running on port ${process.env.PORT}`);
-//     });
-//   })
-//   .catch((err) => console.log(err));

@@ -4,7 +4,11 @@ const HrmHistory  = require('../../models/hrm/HrmHistory');
 const HrmSettings = require('../../models/hrm/HrmSettings');
 
 const signToken = (emp) =>
-  jwt.sign({ id: emp._id, portal: 'emp' }, process.env.JWT_SECRET, { expiresIn: '12h' });
+  jwt.sign(
+    { id: emp._id, portal: 'emp' },
+    process.env.JWT_EMP_SECRET || process.env.JWT_SECRET,  // ✅ portal-specific secret
+    { expiresIn: '12h' }
+  );
 
 const log = async (actorId, actorName, action, desc='', ip='') => {
   try { await HrmHistory.create({ actor:actorId, actor_name:actorName, action, entity_type:'employee', entity_id:actorId, entity_label:actorName, description:desc, ip_address:ip, portal:'emp' }); } catch {}

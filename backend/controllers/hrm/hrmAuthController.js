@@ -7,7 +7,11 @@ const HrmSettings  = require('../../models/hrm/HrmSettings');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const signToken = (user) =>
-  jwt.sign({ id: user._id, role: user.role, portal: 'hrm' }, process.env.JWT_SECRET, { expiresIn: '8h' });
+  jwt.sign(
+    { id: user._id, role: user.role, portal: 'hrm' },
+    process.env.JWT_HRM_SECRET || process.env.JWT_SECRET,  // ✅ portal-specific secret
+    { expiresIn: '8h' }
+  );
 
 const log = async (actorId, actorName, action, entityType, entityId, entityLabel, desc = '', ip = '') => {
   try { await HrmHistory.create({ actor: actorId, actor_name: actorName, action, entity_type: entityType, entity_id: entityId, entity_label: entityLabel, description: desc, ip_address: ip }); } catch {}
