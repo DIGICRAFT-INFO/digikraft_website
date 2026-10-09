@@ -1,844 +1,735 @@
-# DigiKraft Social — Complete System Documentation
+# DigiKraft Social — Internal System Documentation
 
-> **Version:** 4.0
-> **Date:** October 2026
-> **Project:** DKS-WEBSITE_latest-deployed
-> **Portals:** CMS · CRM · HRM · EMP
-> **Stack:** Next.js 14 (Frontend) · Node.js + Express (Backend) · MongoDB Atlas (Database)
+**Document Version:** 5.0
+**Last Updated:** October 2026
+**Project:** DigiKraft Social Portal System
+**Prepared By:** Development Team
+**Status:** Production Ready
 
 ---
 
 ## Table of Contents
 
-1. [System Architecture](#1-system-architecture)
-2. [Server Start kaise kare](#2-server-start-kaise-kare)
-3. [Portal Chooser Page](#3-portal-chooser-page)
-4. [CMS Portal — Website Admin](#4-cms-portal--website-admin)
-5. [CRM Portal — Client Management](#5-crm-portal--client-management)
-6. [HRM Portal — HR Management](#6-hrm-portal--hr-management)
-7. [EMP Portal — Employee Self Service](#7-emp-portal--employee-self-service)
-8. [EMP Check-In / Check-Out — Full Flow](#8-emp-check-in--check-out--full-flow)
-9. [Task Management System — Full Flow](#9-task-management-system--full-flow)
-10. [Leave Flow — Apply se Approval tak](#10-leave-flow--apply-se-approval-tak)
-11. [Payroll Flow — Preview se Slip tak](#11-payroll-flow--preview-se-slip-tak)
-12. [Holiday Calendar](#12-holiday-calendar)
-13. [Announcements / Notice Board](#13-announcements--notice-board)
-14. [Reports & Analytics](#14-reports--analytics)
-15. [Onboarding Tracker](#15-onboarding-tracker)
-16. [Team Directory](#16-team-directory)
-17. [New Employee Add karna — Full Flow](#17-new-employee-add-karna--full-flow)
-18. [Roles & Permissions](#18-roles--permissions)
-19. [Security Features](#19-security-features)
-20. [All Credentials — Quick Reference](#20-all-credentials--quick-reference)
-21. [API Endpoints Reference](#21-api-endpoints-reference)
-22. [Troubleshooting](#22-troubleshooting)
-
----
-
-## 1. System Architecture
-
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║              digikraftsocial.com  (Frontend — Next.js 14)            ║
-║                         Port: 3000 (local)                           ║
-║                                                                      ║
-║   /portals  ── Portal Chooser (4 cards)                              ║
-║                                                                      ║
-║  ┌──────────┐  ┌──────────┐  ┌──────────────┐  ┌───────────────┐   ║
-║  │   CMS    │  │   CRM    │  │     HRM      │  │      EMP      │   ║
-║  │ Website  │  │  Client  │  │  HR Team     │  │  Employees    │   ║
-║  │  Admin   │  │   Mgmt   │  │ Management   │  │ Self-Service  │   ║
-║  │/admin/   │  │/crm/     │  │ /hrm/login   │  │  /emp/login   │   ║
-║  │login     │  │login     │  │  (Purple)    │  │   (Blue)      │   ║
-║  └──────────┘  └──────────┘  └──────────────┘  └───────────────┘   ║
-╚══════════════════════════════════════════════════════════════════════╝
-                               │
-                               ↓
-╔══════════════════════════════════════════════════════════════════════╗
-║         backend.digikraftsocial.com  (Backend — Node.js)             ║
-║                         Port: 5000 (local)                           ║
-║                                                                      ║
-║   /api/*              → CMS routes                                   ║
-║   /api/crm/*          → CRM routes                                   ║
-║   /api/hrm/*          → HRM routes                                   ║
-║   /api/emp/*          → EMP routes                                   ║
-╚══════════════════════════════════════════════════════════════════════╝
-                               │
-                               ↓
-╔══════════════════════════════════════════════════════════════════════╗
-║              MongoDB Atlas  (Database: dks-website)                  ║
-║                                                                      ║
-║   users               ← CMS users                                    ║
-║   crm_users           ← CRM staff                                    ║
-║   hrm_users           ← HRM staff (HR team login)                    ║
-║   hrm_employees       ← All employees (EMP login bhi yahi se)        ║
-║   hrm_attendance      ← Employee attendance records                  ║
-║   hrm_leaves          ← Leave requests                               ║
-║   hrm_leave_types     ← EL / SL / CL / OL types                     ║
-║   hrm_payrolls        ← Monthly payroll records                      ║
-║   hrm_salary_slips    ← Individual salary slips                      ║
-║   hrm_daily_tasks     ← Daily task log + HR-assigned tasks           ║
-║   hrm_holidays        ← Holiday calendar                             ║
-║   hrm_announcements   ← Company-wide announcements                   ║
-║   hrm_departments     ← Department list                              ║
-║   hrm_designations    ← Designation list                             ║
-║   hrm_regularizations ← Attendance correction requests               ║
-║   hrm_history         ← Audit trail                                  ║
-║   hrm_notifications   ← In-app notifications                         ║
-║   hrm_settings        ← HRM configuration (singleton)                ║
-║   crm_clients + crm_projects + crm_invoices ... (CRM collections)    ║
-╚══════════════════════════════════════════════════════════════════════╝
-```
-
-### 4 Portals Comparison
-
-| | CMS | CRM | HRM | EMP |
-|---|---|---|---|---|
-| **Kaun use karta hai** | Website editors | Sales/accounts team | HR team | Sab employees |
-| **Login URL** | `/admin/login` | `/crm/login` | `/hrm/login` | `/emp/login` |
-| **DB Collection** | `users` | `crm_users` | `hrm_users` | `hrm_employees` |
-| **localStorage Token** | `token` | `crm_token` | `hrm_token` | `emp_token` |
-| **JWT Expiry** | 7 days | 8 hours | 8 hours | 12 hours |
-| **Theme** | Green | Green | Purple `#7c3aed` | Blue `#2563eb` |
-
----
-
-## 2. Server Start kaise kare
-
-**2 terminals mein run karo — dono zaroori hain:**
-
-```bash
-# Terminal 1 — Backend
-cd DKS-WEBSITE_latest-deployed\backend
-npm start
-# Output: ✅ DigiKraft Social Server running on port 5000
-
-# Terminal 2 — Frontend
-cd DKS-WEBSITE_latest-deployed\website
-npm run dev
-# Output: ✓ Ready in 2s  →  http://localhost:3000
-```
-
-> ⚠️ **MongoDB Atlas IP Whitelist:** Agar "MongooseServerSelectionError" aaye →
-> Atlas → Network Access → Add IP Address → **Add Current IP Address** → Confirm → 2 min wait
-
----
-
-## 3. Portal Chooser Page
-
-**URL:** `http://localhost:3000/portals`
-
-Ek page jahan se sabhi 4 portals ke login pages direct open ho jaate hain. CRM/HRM sidebar mein bhi "Other Portals" quick-links hain.
-
----
-
-## 4. CMS Portal — Website Admin
-
-**Kya hai:** Website ka content manage karna — blog posts, projects, services, SEO, homepage, etc.
-
-### Credentials
-| Email | Password | Role |
-|---|---|---|
-| `srdani12@gmail.com` | `digikraftsocial@2026` | `superadmin` |
-
-### CMS mein kya manage hota hai
-| Section | Kaam |
+| # | Section |
 |---|---|
-| Blog Posts | Articles likho, publish karo |
-| Projects | Portfolio projects add/edit karo |
-| Homepage | Hero, services, features edit karo |
-| About | About page content |
-| SEO | Meta tags, sitemap |
-| Enquiries | Contact form submissions |
-| Users | CMS users manage karo |
+| 1 | [System Overview](#1-system-overview) |
+| 2 | [Technology Stack](#2-technology-stack) |
+| 3 | [Portal Architecture](#3-portal-architecture) |
+| 4 | [Portal Access — Login URLs & Credentials](#4-portal-access--login-urls--credentials) |
+| 5 | [CMS Portal — Website Administration](#5-cms-portal--website-administration) |
+| 6 | [CRM Portal — Client Relationship Management](#6-crm-portal--client-relationship-management) |
+| 7 | [HRM Portal — Human Resource Management](#7-hrm-portal--human-resource-management) |
+| 8 | [EMP Portal — Employee Self-Service](#8-emp-portal--employee-self-service) |
+| 9 | [Task Management System](#9-task-management-system) |
+| 10 | [Attendance & Check-In/Out System](#10-attendance--check-inout-system) |
+| 11 | [Leave Management](#11-leave-management) |
+| 12 | [Payroll & Salary System](#12-payroll--salary-system) |
+| 13 | [Holiday Calendar](#13-holiday-calendar) |
+| 14 | [Announcements & Notice Board](#14-announcements--notice-board) |
+| 15 | [Reports & Analytics](#15-reports--analytics) |
+| 16 | [Employee Onboarding Tracker](#16-employee-onboarding-tracker) |
+| 17 | [Team Directory](#17-team-directory) |
+| 18 | [Roles & Permissions Matrix](#18-roles--permissions-matrix) |
+| 19 | [Security Architecture](#19-security-architecture) |
+| 20 | [Server Setup & Commands](#20-server-setup--commands) |
+| 21 | [API Reference](#21-api-reference) |
+| 22 | [Troubleshooting Guide](#22-troubleshooting-guide) |
 
 ---
 
-## 5. CRM Portal — Client Management
+## 1. System Overview
 
-**Kya hai:** DigiKraft ke clients, projects, proposals, invoices, payments.
+DigiKraft Social operates **four independent portals** on a single unified backend. Each portal serves a distinct user group, maintains its own authentication system, and stores data in dedicated database collections — ensuring complete role isolation and data security.
 
-### Credentials
-| Email | Password | Role |
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    digikraftsocial.com                               │
+│                                                                     │
+│   ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐      │
+│   │    CMS    │  │    CRM    │  │    HRM    │  │    EMP    │      │
+│   │ Website   │  │  Client   │  │   Human   │  │ Employee  │      │
+│   │  Admin    │  │  Mgmt     │  │ Resources │  │   Self    │      │
+│   │           │  │           │  │           │  │  Service  │      │
+│   │/admin/    │  │/crm/      │  │/hrm/      │  │/emp/      │      │
+│   │login      │  │login      │  │login      │  │login      │      │
+│   └───────────┘  └───────────┘  └───────────┘  └───────────┘      │
+│                                                                     │
+│                    ↓  Single Backend API  ↓                         │
+│              backend.digikraftsocial.com:5000                        │
+│                                                                     │
+│                    ↓  Single Database  ↓                            │
+│                  MongoDB Atlas — dks-website                         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Portal Summary
+
+| Portal | Users | Purpose | Theme |
+|---|---|---|---|
+| **CMS** | Website editors, content team | Manage website content, blogs, projects, SEO | Green |
+| **CRM** | Sales, accounts, executives | Manage clients, projects, proposals, invoices, payments | Green |
+| **HRM** | HR Admin, HR Manager, Dept Manager | Manage employees, attendance, payroll, leaves, tasks | Purple |
+| **EMP** | All company employees | Self-service — attendance, tasks, leaves, salary, profile | Blue |
+
+---
+
+## 2. Technology Stack
+
+| Layer | Technology | Version |
 |---|---|---|
-| `admin@digikraftsocial.com` | `Dks@Admin2024` | `owner` |
-
-### CRM Modules
-```
-CRM Dashboard
-├── Clients         → Client profiles, add/edit, click for detail
-│   └── Client Detail → 4 tabs: Projects | Proposals | Quotations | Invoices
-├── Services        → Services list
-├── Projects        → Active/completed projects
-├── Proposals       → Client proposals, PDF download
-├── Quotations      → Price quotes, PDF download, copy
-├── Invoices        → Bills, PDF download, mark paid
-├── Portfolio       → Company portfolio
-├── Payments        → Payment records
-├── Enquiries       → New leads
-├── Pending Users   → Naye CRM staff approve karo
-├── History         → Activity log
-├── Notifications   → System notifications
-└── Settings        → CRM settings, brand theme, bank details
-```
-
-### PDF Download
-```
-List page → Row click → Detail page → ⬇️ Download PDF button
-→ html2pdf.js se direct PDF save — browser print dialog NAHI aata
-```
-
-### New CRM Staff
-```
-1. Staff → /crm/login → Register
-2. is_active: false (pending)
-3. Owner/Manager → /crm/dashboard/pending-users → Approve + Role
-   Roles: owner | manager | accountant | executive
-4. Staff login kar sakta hai
-```
+| **Frontend** | Next.js | 14.x |
+| **Backend** | Node.js + Express | 5.x |
+| **Database** | MongoDB Atlas | Cloud |
+| **Authentication** | JWT (JSON Web Tokens) | Per-portal secrets |
+| **Password Hashing** | bcryptjs | 12 rounds |
+| **Security** | Helmet, express-mongo-sanitize, HPP, express-rate-limit | Latest |
+| **PDF Generation** | html2pdf.js | Client-side |
+| **File Hosting** | Static uploads / Cloudinary | — |
 
 ---
 
-## 6. HRM Portal — HR Management
+## 3. Portal Architecture
 
-**Kya hai:** HR team ke liye employee management, attendance, leaves, payroll, tasks, announcements sab.
+### Database Collections
 
-### Credentials
-| Email | Password | Role |
+| Collection | Used By | Purpose |
 |---|---|---|
-| `hradmin@digikraftsocial.com` | `HRM@Admin2024` | `hr_admin` |
-| `hrmanager@digikraftsocial.com` | `HRM@Manager2024` | `hr_manager` |
+| `users` | CMS | CMS admin users |
+| `crm_users` | CRM | CRM staff accounts |
+| `hrm_users` | HRM | HR team accounts |
+| `hrm_employees` | HRM + EMP | All employees (dual-use — HRM manages, EMP self-service login) |
+| `hrm_attendance` | HRM + EMP | Daily attendance records |
+| `hrm_leaves` | HRM + EMP | Leave requests & approvals |
+| `hrm_leave_types` | HRM + EMP | Leave type configuration (EL/SL/CL/OL) |
+| `hrm_payrolls` | HRM | Monthly payroll runs |
+| `hrm_salary_slips` | HRM + EMP | Individual salary slips |
+| `hrm_daily_tasks` | HRM + EMP | Daily task log & HR-assigned tasks |
+| `hrm_holidays` | HRM + EMP | Company holiday calendar |
+| `hrm_announcements` | HRM + EMP | Company-wide broadcast messages |
+| `hrm_departments` | HRM | Department structure |
+| `hrm_designations` | HRM | Designation levels |
+| `hrm_regularizations` | HRM + EMP | Attendance correction requests |
+| `hrm_history` | HRM | Full audit trail |
+| `hrm_notifications` | HRM + EMP | In-app notifications |
+| `hrm_settings` | HRM | HR configuration (singleton) |
+| `crm_clients` + others | CRM | All CRM business data |
 
-### HRM Login Flow
-```
-/hrm/login → Email + Password
-        ↓
-Rate limit: 10 attempts / 15 min per IP
-        ↓
-"hrm_users" collection check
-        ↓
-is_active: false → "Account pending approval"
-Locked → "Account locked for X minutes"
-Wrong password → attempt++ (5 attempts → 30 min lockout)
-        ↓
-Success → JWT (8h, portal:'hrm') → hrm_token + hrm_user
-        ↓
-/hrm/dashboard
-```
+### JWT Token Architecture
 
-### HRM 3 Roles — Kya fark hai
+Each portal uses a **dedicated JWT secret** — a token from one portal is **cryptographically invalid** in another.
 
-```
-hr_admin (Full Power)
-├── Sabhi employees dekh + edit karo
-├── Salary + bank details dekho + edit karo
-├── EMP password reset karo
-├── Payroll process karo
-├── HRM Settings manage karo
-├── Naye HRM users approve karo
-├── Reports dekho
-└── Sab kuch
+| Portal | Secret Env Variable | Expiry | Portal Claim |
+|---|---|---|---|
+| CMS | `JWT_SECRET` | 7 days | — |
+| CRM | `JWT_CRM_SECRET` | 8 hours | `portal: 'crm'` |
+| HRM | `JWT_HRM_SECRET` | 8 hours | `portal: 'hrm'` |
+| EMP | `JWT_EMP_SECRET` | 12 hours | `portal: 'emp'` |
 
-hr_manager (Most Access)
-├── Sabhi employees dekho + edit karo
-├── Salary + bank details dekho + edit karo  ✅ (v4.0 updated)
-├── Payroll process karo
-├── Leave + attendance manage karo
-├── Announcements create karo
-├── Assign tasks to employees
-├── Reports dekho
-└── ✗ Settings nahi  ✗ Pending Users nahi  ✗ EMP password reset nahi
-
-dept_manager (Sirf Apna Department)
-├── Sirf apne dept ke employees dekho
-├── ✗ Salary/bank details NAHI
-├── Attendance + leave apne dept ka manage karo
-└── ✗ Payroll  ✗ Settings  ✗ Tasks assign
-```
-
-### HRM Modules — Complete List
-```
-HRM Dashboard       → Stats: attendance rate, headcount, payroll, pending leaves
-├── Employees       → Full list, add new, click for detail page
-│   └── Employee Detail (5 tabs)
-│       ├── Overview      → Work info, contact, emergency, salary card
-│       ├── Personal      → DOB, gender, blood group, addresses
-│       ├── Salary & Bank → CTC, basic, bank, PF/ESI/UAN (hr_admin + hr_manager)
-│       ├── Attendance    → Monthly records
-│       └── Leaves        → Leave history
-├── Departments     → Departments + Designations manage karo
-├── Attendance      → Daily view + Regularization approve/reject
-├── Leaves          → Leave requests approve/reject + Leave types
-├── Holidays        → Holiday calendar, India preset import, add/edit
-├── Task Log 🆕     → 3 tabs (see Section 9)
-├── Payroll         → Preview + Process + Mark Paid + Salary slips
-├── Onboarding 🆕   → New employee 5-step checklist
-├── Announcements 🆕 → Company-wide broadcast messages
-├── Reports 🆕      → Headcount, Attendance, Leave, Payroll analytics
-├── Pending Users   → HRM staff approve karo (hr_admin only)
-├── History         → Full audit trail
-├── Notifications   → System events
-└── Settings        → Company info, working hours, payroll config, leave policy
-```
+> **Security Note:** Even if someone extracts a CRM token, attempting to use it on the HRM or EMP API will fail with `401 Invalid portal token`.
 
 ---
 
-## 7. EMP Portal — Employee Self Service
+## 4. Portal Access — Login URLs & Credentials
 
-**Kya hai:** Employees apna attendance, tasks, leaves, salary sab khud manage karte hain.
-
-### Credentials (Test Employee)
-| Work Email | Password | Employee ID |
-|---|---|---|
-| `rahul@digikraftsocial.com` | `EMP@Rahul2024` | `DKS-EMP-001` |
-
-### EMP Login Flow
-```
-/emp/login → Work Email + Password
-        ↓
-Rate limit: 10 attempts / 15 min per IP
-        ↓
-"hrm_employees" collection check (SAME collection jo HRM use karta hai)
-        ↓
-is_active: false → "Account disabled. Contact HR."
-status: resigned/terminated → Login blocked
-Wrong password → attempt++ (5 attempts → 30 min lockout)
-        ↓
-Success → JWT (12h, portal:'emp') → emp_token + emp_user
-        ↓
-/emp/dashboard
-```
-
-### EMP First Login Password
-```
-HR jab employee create karta hai → auto temp password:
-  Format: firstname@year  →  e.g. rahul@2026
-
-Employee first login ke baad:
-  My Profile → Change Password tab → Naya strong password set karo
-```
-
-### EMP Modules — Complete List
-```
-EMP Dashboard       → Check-in/out button, stats, leave balance, salary info
-├── Attendance      → Monthly history, regularization request
-├── My Tasks 🆕     → 2 sections (see Section 9)
-│   ├── My Daily Log → Apne khud ke tasks add karo time ke sath
-│   └── HR Assigned → HR ke assigned tasks, status update, comment
-├── My Leaves       → Leave apply, balance, cancel pending
-├── Holidays 🆕     → Company holiday calendar
-├── Salary          → Salary slips, PDF download, CTC breakup
-├── Announcements 🆕 → HR ke broadcast messages, comment + mark read
-├── Team Directory 🆕 → Colleagues list, department-wise, contact card
-├── My Profile      → Contact info edit, bank details (read-only), password
-└── Notifications   → System events (leave approved, slip generated, etc.)
-```
+### 🌐 Portal Chooser
+> **URL:** `http://localhost:3000/portals` — Single page showing all 4 portal cards
 
 ---
 
-## 8. EMP Check-In / Check-Out — Full Flow
+### 🟢 CMS Portal — Website Administration
 
-### Dashboard pe kya dikhta hai
-
-```
-State 1 — Subah, abhi check-in nahi hua:
-┌────────────────────────────────────────────┐
-│  "Not checked in today"                    │
-│  ┌──────────────────────────────────┐      │
-│  │      🟢  Check In                │      │
-│  └──────────────────────────────────┘      │
-└────────────────────────────────────────────┘
-
-State 2 — Check-in ho gaya:
-┌────────────────────────────────────────────┐
-│  "Checked in at 09:30 AM"                  │
-│  ┌──────────────────────────────────┐      │
-│  │      🟥  Check Out               │      │
-│  └──────────────────────────────────┘      │
-└────────────────────────────────────────────┘
-
-State 3 — Day complete:
-┌────────────────────────────────────────────┐
-│  ✅ Day Complete — 9.0h worked              │
-│  (No button — din khatam)                  │
-└────────────────────────────────────────────┘
-```
-
-### Automatic Status Logic (Backend)
-
-```
-Check-In Time           →  Status Assigned
-─────────────────────────────────────────────
-Before 9:45 AM          →  ✅ "present"
-9:45 AM – 10:00 AM      →  ⚠️ "late"
-After 10:00 AM          →  ⚠️ "late"
-
-At Check-Out:
-Work hours < 4.5h       →  "half_day" (override)
-Work hours ≥ 4.5h       →  status wahi rehta
-```
-
-### MongoDB Record (hrm_attendance)
-```json
-{
-  "employee":           "emp-uuid",
-  "date":               "2026-10-08T00:00:00",
-  "check_in":           "2026-10-08T09:30:00",
-  "check_out":          "2026-10-08T18:30:00",
-  "work_hours":         9.0,
-  "status":             "present",
-  "check_in_location":  "office",
-  "device_info":        "Chrome/Windows...",
-  "marked_by":          "self"
-}
-```
-
-### Attendance Status Meanings
-| Status | Matlab |
+| Field | Value |
 |---|---|
-| `present` | Check-in before 9:45, 4.5h+ work |
-| `late` | Check-in after 9:45 AM |
-| `half_day` | Work hours < 4.5 hours |
-| `absent` | Koi check-in nahi |
-| `on_leave` | Approved leave thi |
+| **Login URL (Local)** | `http://localhost:3000/admin/login` |
+| **Login URL (Production)** | `https://digikraftsocial.com/admin/login` |
+| **Email** | `srdani12@gmail.com` |
+| **Password** | `digikraftsocial@2026` |
+| **Role** | `superadmin` |
+| **Token Storage** | `localStorage → token` |
+
+---
+
+### 🟢 CRM Portal — Client Management
+
+| Field | Value |
+|---|---|
+| **Login URL (Local)** | `http://localhost:3000/crm/login` |
+| **Login URL (Production)** | `https://digikraftsocial.com/crm/login` |
+| **Email** | `admin@digikraftsocial.com` |
+| **Password** | `Dks@Admin2024` |
+| **Role** | `owner` |
+| **Token Storage** | `localStorage → crm_token` |
+
+---
+
+### 🟣 HRM Portal — HR Admin
+
+| Field | Value |
+|---|---|
+| **Login URL (Local)** | `http://localhost:3000/hrm/login` |
+| **Login URL (Production)** | `https://digikraftsocial.com/hrm/login` |
+| **Email** | `hradmin@digikraftsocial.com` |
+| **Password** | `HRM@Admin2024` |
+| **Role** | `hr_admin` — Full access |
+| **Token Storage** | `localStorage → hrm_token` |
+
+### 🟣 HRM Portal — HR Manager
+
+| Field | Value |
+|---|---|
+| **Email** | `hrmanager@digikraftsocial.com` |
+| **Password** | `HRM@Manager2024` |
+| **Role** | `hr_manager` — Most access (no Settings, no User Management) |
+
+---
+
+### 🔵 EMP Portal — Test Employee
+
+| Field | Value |
+|---|---|
+| **Login URL (Local)** | `http://localhost:3000/emp/login` |
+| **Login URL (Production)** | `https://digikraftsocial.com/emp/login` |
+| **Work Email** | `rahul@digikraftsocial.com` |
+| **Password** | `EMP@Rahul2024` |
+| **Employee ID** | `DKS-EMP-001` |
+| **Name** | Rahul Sharma |
+| **Token Storage** | `localStorage → emp_token` |
+
+---
+
+## 5. CMS Portal — Website Administration
+
+### Purpose
+Manage all public-facing content on digikraftsocial.com — blog posts, project portfolio, homepage sections, services, SEO, and contact enquiries.
+
+### Modules
+
+| Module | Functionality |
+|---|---|
+| **Blog Posts** | Create, edit, publish/unpublish articles |
+| **Projects** | Portfolio project management with images |
+| **Homepage** | Hero banner, services section, features edit |
+| **About** | About page content management |
+| **SEO** | Meta tags, keywords, sitemap settings |
+| **Enquiries** | View contact form submissions |
+| **Users** | Manage CMS user accounts and roles |
+| **Settings** | Site-wide configuration |
+
+### CMS Roles
+
+| Role | Permissions |
+|---|---|
+| `superadmin` | Full access — all modules + user management |
+| `admin` | Blog, projects, pages — no user management |
+| `author` | Blog posts only |
+| `user` | Dashboard view only |
+
+---
+
+## 6. CRM Portal — Client Relationship Management
+
+### Purpose
+Complete business operations management — clients, projects, proposals, quotations, invoices, payments, and portfolio.
+
+### Modules
+
+| Module | Functionality |
+|---|---|
+| **Dashboard** | Revenue overview, pending invoices, recent activity |
+| **Clients** | Client profiles, contact details, full history |
+| **Client Detail** | 4 tabs: Projects · Proposals · Quotations · Invoices |
+| **Services** | Service catalogue management |
+| **Projects** | Active/completed project tracking |
+| **Proposals** | Create proposals, PDF download, share with clients |
+| **Quotations** | Price quotations with line items, PDF download, copy |
+| **Invoices** | Professional invoices, PDF download, mark as paid |
+| **Payments** | Payment record tracking |
+| **Portfolio** | Company work portfolio management |
+| **Enquiries** | New business leads and inquiries |
+| **Pending Users** | Approve/reject new CRM staff registrations |
+| **History** | Complete audit trail of all CRM actions |
+| **Notifications** | In-app system notifications |
+| **Settings** | Brand theme, bank details, document numbering |
+
+### PDF Generation
+All proposals, quotations, and invoices support direct **PDF download** (no browser print dialog). Powered by `html2pdf.js` — captures the document layout and downloads as a PDF file automatically.
+
+### CRM Roles
+
+| Role | Clients | Projects | Proposals | Quotations | Invoices | Payments | Settings |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| `owner` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `manager` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `accountant` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ❌ |
+| `executive` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+### New Staff Onboarding Flow
+
+```
+1. Staff member registers at /crm/login → "Register"
+2. Account created with is_active: false (pending)
+3. Owner/Manager → Pending Users → Approve + Assign Role + Select Page Access
+4. Staff member can now log in
+```
+
+### Security
+- Rate limited login: **10 attempts per 15 minutes**
+- Brute-force lockout: **5 wrong passwords → 30-minute account lock**
+- Portal-isolated JWT (`portal: 'crm'` claim)
+
+---
+
+## 7. HRM Portal — Human Resource Management
+
+### Purpose
+Complete HR operations — employee lifecycle management, attendance tracking, leave approvals, payroll processing, task assignment, onboarding, announcements, and analytics.
+
+### Modules
+
+| Module | Description |
+|---|---|
+| **Dashboard** | Live stats — attendance rate, headcount, pending leaves, payroll status |
+| **Employees** | Full employee profiles, add/edit, department/designation assignment |
+| **Employee Detail** | 5 tabs: Overview · Personal · Salary & Bank · Attendance · Leaves |
+| **Departments** | Department structure + designation level management |
+| **Attendance** | Daily attendance view, regularization request approvals |
+| **Leaves** | Leave request approvals/rejections + leave type configuration |
+| **Holidays** | Holiday calendar management, India preset import |
+| **Task Log** | View employee daily task logs + assign tasks (see Section 9) |
+| **Payroll** | Monthly payroll processing, salary slip generation |
+| **Onboarding** | 5-step onboarding checklist per new joiner |
+| **Announcements** | Create company-wide broadcast messages with scheduling |
+| **Reports** | Analytics — Headcount, Attendance, Leave Utilisation, Payroll Cost |
+| **Pending Users** | Approve/reject HRM staff registrations *(hr_admin only)* |
+| **History** | Full audit trail with single/bulk delete option |
+| **Notifications** | System event notifications |
+| **Settings** | Company info, working hours, payroll config, leave policy *(hr_admin only)* |
+
+### Employee Detail Page — 5 Tabs
+
+| Tab | Visible To | What It Shows |
+|---|---|---|
+| **Overview** | All HRM roles | Work info, contact details, emergency contact, salary summary card |
+| **Personal** | All HRM roles | DOB, gender, blood group, current/permanent address |
+| **Salary & Bank** | `hr_admin` + `hr_manager` | CTC, basic salary, bank details, PF/ESI/UAN numbers |
+| **Attendance** | All HRM roles | Monthly attendance records (filterable by month/year) |
+| **Leaves** | All HRM roles | Complete leave history |
+
+### HRM Roles Comparison
+
+| Feature | `hr_admin` | `hr_manager` | `dept_manager` |
+|---|:---:|:---:|:---:|
+| View all employees | ✅ | ✅ | Own dept only |
+| Add / Edit employees | ✅ | ✅ | ❌ |
+| View Salary & Bank details | ✅ | ✅ | ❌ |
+| Edit Salary & Bank details | ✅ | ✅ | ❌ |
+| Reset employee EMP password | ✅ | ❌ | ❌ |
+| Deactivate employee | ✅ | ❌ | ❌ |
+| Process payroll | ✅ | ✅ | ❌ |
+| Assign tasks to employees | ✅ | ✅ | ❌ |
+| View employee task logs | ✅ | ✅ | Own dept only |
+| Approve leaves | ✅ | ✅ | Own dept only |
+| Approve attendance regularization | ✅ | ✅ | Own dept only |
+| Manage departments/designations | ✅ | ❌ | ❌ |
+| Create announcements | ✅ | ✅ | ❌ |
+| View reports | ✅ | ✅ | ❌ |
+| Manage onboarding checklist | ✅ | ✅ | ❌ |
+| Approve HRM users | ✅ | ❌ | ❌ |
+| Access Settings | ✅ | ❌ | ❌ |
+| View history/audit | ✅ | ✅ | ❌ |
+
+### New HRM Staff Registration Flow
+
+```
+1. Staff registers at /hrm/login
+2. Account created with is_active: false
+3. HR Admin → Pending Users → Approve + Assign Role + Page Access
+4. Staff can log in
+```
+
+---
+
+## 8. EMP Portal — Employee Self-Service
+
+### Purpose
+Employees manage their own workday — clock in/out, log daily tasks, apply for leaves, download salary slips, view company announcements, and connect with colleagues.
+
+### Modules
+
+| Module | Description |
+|---|---|
+| **Dashboard** | Check-in/out button, daily stats, leave balance, last salary |
+| **Attendance** | Monthly attendance history, regularization requests |
+| **My Tasks** | Daily work log + HR-assigned task management (see Section 9) |
+| **My Leaves** | Apply for leave, check balance, cancel pending requests |
+| **Holidays** | Company holiday calendar (read-only) |
+| **Salary** | All salary slips with PDF download, monthly CTC breakup |
+| **Announcements** | Company-wide HR messages with read receipts |
+| **Team Directory** | Browse all colleagues by department, click for contact info |
+| **My Profile** | Update contact info, view bank details (read-only), change password |
+| **Notifications** | System events — leave approvals, salary slips, etc. |
+
+### Employee First Login
+
+| Step | Action |
+|---|---|
+| 1 | HR creates employee → system auto-generates temp password: `firstname@year` (e.g. `rahul@2026`) |
+| 2 | HR shares password securely (WhatsApp/email) |
+| 3 | Employee logs in at `/emp/login` |
+| 4 | Employee goes to **My Profile → Change Password** |
+
+### EMP Permissions
+
+| Action | Allowed |
+|---|---|
+| Check In / Check Out | ✅ |
+| View own attendance history | ✅ |
+| Request attendance regularization | ✅ |
+| Add own daily tasks | ✅ |
+| Update status on HR-assigned tasks | ✅ |
+| Comment on assigned tasks | ✅ |
+| Apply for leave | ✅ |
+| Cancel pending leave | ✅ |
+| View leave balance | ✅ |
+| Download own salary slips (PDF) | ✅ |
+| View CTC breakup | ✅ |
+| Edit contact / emergency info | ✅ |
+| Change own password | ✅ |
+| View bank details | ✅ *(read-only)* |
+| Edit bank / salary details | ❌ *(HR only)* |
+| View other employees' salary | ❌ |
+| Approve leaves | ❌ |
+
+---
+
+## 9. Task Management System
+
+### Overview
+
+The system supports **two types of tasks** across both HRM and EMP portals:
+
+| Type | Created By | Visible To |
+|---|---|---|
+| **Daily Log Task** | Employee (self) | Employee + HR (read) |
+| **HR-Assigned Task** | HR Manager / HR Admin | Employee (action) + HR (kanban) |
+
+---
+
+### HRM Portal — Task Log (`/hrm/dashboard/tasks`)
+
+#### Tab 1: Daily Log
+View all employees' self-logged tasks for any date.
+
+| Feature | Detail |
+|---|---|
+| Date picker | View any date's logs |
+| Department filter | Filter by department |
+| Employee search | Search by name or ID |
+| Expandable cards | Click employee row to see full task list |
+| Team summary | Total employees, submitted vs no-log, hours worked, completion % |
+
+#### Tab 2: Assign Task
+Assign work items directly to employees with full project context.
+
+| Field | Purpose |
+|---|---|
+| Employee selector | Single employee or bulk (multiple checkboxes) |
+| Title | Task name |
+| Description | Detailed instructions for the employee |
+| Category | Design / Development / Meeting / Research / Review / Client / Admin / Other |
+| Priority | 🟢 Low · 🟡 Medium · 🟠 High · 🔴 Urgent |
+| Task Date | Date the task is assigned for |
+| Due Date | Hard deadline — overdue is flagged automatically |
+| Project Name | Links task to a project |
+| Estimated Hours | Time estimate set by HR |
+
+#### Tab 3: Assigned Tasks (Kanban Board)
+Visual board showing all assigned tasks across 4 columns.
+
+| Column | Status |
+|---|---|
+| To Do | Not yet started |
+| In Progress | Employee is working on it |
+| Blocked | Employee has raised a blocker |
+| Done | Completed |
+
+**Filters:** Status · Priority · Employee · ⚠️ Overdue Only
+
+Each task card shows:
+- Employee name, priority badge, overdue warning
+- Due date, estimated hours, project name
+- Comment thread count
+- Edit / Delete / 💬 Comment buttons
+
+---
+
+### EMP Portal — My Tasks (`/emp/dashboard/tasks`)
+
+#### Section 1: My Daily Log
+Employees log their own daily work with time tracking.
+
+| Feature | Detail |
+|---|---|
+| Add Task | Title, category, start/end time, **duration auto-calculated**, priority, project, notes |
+| Status toggle | Click status icon → cycles: To Do → In Progress → Done |
+| Today view | All tasks for selected date with summary bar |
+| History | Last 7 / 14 / 30 days, grouped by date with progress bar |
+
+#### Section 2: HR Assigned Tasks
+All tasks assigned by HR management.
+
+| Feature | Detail |
+|---|---|
+| Active tab | Shows pending + in-progress + blocked tasks |
+| Overdue alert | Red banner if any task has passed its deadline |
+| Status update | One-click status change buttons on each card |
+| Comment thread | Real-time two-way messaging with HR |
+| Completed tab | History of all done tasks |
+
+### Task Communication Flow
+
+```
+HR assigns task
+       ↓
+Employee sees it in "HR Assigned" section
+       ↓
+Employee updates status (In Progress)
+       ↓
+HR sees status change on Kanban board
+       ↓
+Employee marks Done + adds comment: "Completed. File uploaded."
+       ↓
+HR reviews + responds in comment thread
+```
+
+---
+
+## 10. Attendance & Check-In/Out System
+
+### Employee Check-In/Out (EMP Dashboard)
+
+The **Check In** button appears on the employee dashboard. The system automatically determines attendance status based on time.
+
+| Check-In Time | Status Assigned |
+|---|---|
+| Before 9:45 AM | `present` |
+| 9:45 AM – 10:00 AM | `late` |
+| After 10:00 AM | `late` |
+| Work hours < 4.5h | Overrides to `half_day` at checkout |
+
+### Check-In Button States
+
+| State | Display |
+|---|---|
+| Not checked in | `🟢 Check In` (green button) |
+| Checked in | `🟥 Check Out` (red button) + check-in time shown |
+| Day complete | `✅ Day Complete — X.Xh worked` |
+
+### All Attendance Statuses
+
+| Status | Meaning |
+|---|---|
+| `present` | On time, 4.5h+ work |
+| `late` | Checked in after 9:45 AM |
+| `half_day` | Less than 4.5 hours worked |
+| `absent` | No check-in recorded |
+| `on_leave` | Approved leave |
 | `wfh` | Work from home |
 | `holiday` | Company holiday |
 | `weekly_off` | Saturday / Sunday |
 
-### Regularization Request (Check-in bhool gaye)
-```
-EMP → Attendance → "Request Regularization" button
-  → Date, Actual Check-in time, Actual Check-out time, Reason
-  → POST /api/emp/attendance/regularize
+### Regularization Request (Missed Check-In)
 
-HRM → Attendance → "Regularizations" tab
-  → Approve → Record auto-update ho jaata hai
-  → Reject → Employee ko notification
-```
-
----
-
-## 9. Task Management System — Full Flow
-
-### Overview — 2 Types of Tasks
-
-```
-Type 1: Employee ka khud ka Daily Log
-  ├── Employee khud add karta hai
-  ├── Time ke sath (start → end, duration auto)
-  ├── Category, Priority, Status, Project
-  └── HR dekh sakta hai HRM portal mein
-
-Type 2: HR-Assigned Task
-  ├── HR ne employee ko assign kiya
-  ├── Due date, estimated hours, priority
-  ├── Employee status update karta hai
-  ├── Dono (HR + Employee) comment kar sakte hain
-  └── Kanban board pe HR dekh sakta hai
-```
-
-### HRM Portal — Task Log (`/hrm/dashboard/tasks`)
-
-#### Tab 1: 📅 Daily Log
-```
-Date picker → Kisi bhi din ka log dekho
-Department filter + Employee search
-
-Har employee card:
-  - Name, ID, Department, Designation
-  - Tasks count · Done count · Hours logged · Progress %
-  - "No log" badge agar kuch submit nahi kiya
-
-Card expand → Tasks detail:
-  - Task title, Category emoji, Start→End time, Duration
-  - Project name, Status badge
-```
-
-#### Tab 2: ➕ Assign Task
-```
-Mode toggle: 👤 Single Employee  OR  👥 Multiple Employees
-
-Single mode: Dropdown se employee choose karo
-Bulk mode: Checkboxes se multiple employees select karo
-
-Task form fields:
-  Title *           → Task ka naam
-  Description       → Detailed instructions
-  Category          → 🎨Design / 💻Dev / 🤝Meeting / 🔍Research /
-                       📋Review / 👤Client / 📁Admin / 📌Other
-  Priority          → 🟢Low / 🟡Medium / 🟠High / 🔴Urgent
-  Task Date         → Kab ka task hai
-  Due Date          → Deadline (overdue auto-detect)
-  Project Name      → Kaunse project ke liye
-  Estimated Hours   → Kitna time lagega
-
-Submit → Employee ko task assign ho jaata hai
-Employee ko /emp/dashboard/tasks pe dikhta hai
-```
-
-#### Tab 3: 📋 Assigned Tasks (Kanban Board)
-```
-Filters: Status | Priority | Employee | ☑ Overdue Only
-
-Summary strip: Total | To Do | In Progress | Blocked | Done | Overdue
-
-4 Kanban Columns:
-  ┌──────────┐  ┌──────────────┐  ┌─────────┐  ┌──────┐
-  │  To Do   │  │ In Progress  │  │ Blocked │  │ Done │
-  └──────────┘  └──────────────┘  └─────────┘  └──────┘
-
-Har card pe:
-  - Employee name
-  - Priority badge (Urgent/High/Medium/Low)
-  - ⚠️ OVERDUE warning agar deadline nikal gayi
-  - Category, Due date, Project, Estimated hours
-  - Comment count
-  - [💬 Comment] [✏️ Edit] [🗑️ Delete] buttons
-
-💬 Comment → Thread modal:
-  - HR + Employee ke comments
-  - Color coded: HR = purple, Employee = blue
-  - New comment send karo
-
-✏️ Edit → Modal: title, description, status, priority,
-           due date, estimate, HR internal note
-```
-
-### EMP Portal — Tasks (`/emp/dashboard/tasks`)
-
-#### Section 1: 📋 My Daily Log
-```
-Today tab:
-  - Date picker (past dates bhi)
-  - Summary: Total, Done, In Progress, Blocked, Hours
-  - Add Task button
-
-Task Card:
-  - Status icon click → cycle: To Do → In Progress → Done → To Do
-  - Edit button → modal
-  - Delete button (sirf khud ke tasks)
-
-Add Task Modal fields:
-  Title *           → Kaam ka naam
-  Category          → Category select
-  Priority          → Low / Medium / High / Urgent
-  Start Time        → Kab shuru kiya
-  End Time          → Kab khatam hua
-  Duration          → Auto-calculate dikhta hai (e.g. "2h 30m")
-  Status            → To Do / In Progress / Done / Blocked
-  Project Name      → Kaunse project ke liye
-  Estimated Hours   → Apna estimate
-  Notes             → Details, blockers, links
-
-History tab: Last 7 / 14 / 30 days
-  - Date-wise grouped
-  - Progress bar per day (% tasks done)
-```
-
-#### Section 2: 📌 HR Assigned
-```
-Active tab: (pending + in_progress + blocked tasks)
-  ⚠️ Overdue alert banner (agar koi task overdue hai)
-
-Har assigned task card:
-  - "Assigned by HR Name" label
-  - Priority badge
-  - ⚠️ OVERDUE warning
-  - Description / Instructions
-  - Category, Project, Due Date, Est. Hours
-
-Status Update buttons (right on card):
-  [To Do] [In Progress] [Done] [Blocked]
-  → Ek click se status update ho jaata hai
-  → HR ke kanban board pe instantly reflect hota hai
-
-[💬 Comment / X comments] button → Thread modal:
-  - HR ke sabhi comments dikhte hain
-  - Employee reply kar sakta hai
-  - Real-time thread (HR portal + EMP portal dono pe)
-
-Completed tab: Done tasks history
-```
-
-### Task Data Flow (Dono sides se)
-```
-HR assigns task
-      ↓
-Employee → EMP portal → HR Assigned section mein dikhta hai
-      ↓
-Employee status update karta hai (In Progress)
-      ↓
-HR → HRM portal → Kanban board pe status change dikhta hai
-      ↓
-Employee completes task (Done)
-      ↓
-HR → Comment: "Good work! Please share the file."
-      ↓
-Employee → Sees HR comment → Replies
-      ↓
-HR → Sees reply in comment thread
-```
+| Step | Action |
+|---|---|
+| 1 | Employee → Attendance → `Request Regularization` |
+| 2 | Fill: Date, Actual check-in time, Actual check-out time, Reason |
+| 3 | Request submitted to HR |
+| 4 | HR → HRM Attendance → Regularizations tab → Approve / Reject |
+| 5 | If approved — attendance record updates automatically |
 
 ---
 
-## 10. Leave Flow — Apply se Approval tak
+## 11. Leave Management
 
-### Employee Side (EMP Portal)
-```
-EMP → My Leaves → Apply tab
-  Form: Leave Type | From Date | To Date | Session | Reason
-  → POST /api/emp/leaves (status: "pending")
-  → Balance check: enough balance hai?
-  → Employee "My Requests" mein "Pending" dikhta hai
-  → Cancel bhi kar sakta hai (pending state mein)
-```
+### Leave Types & Annual Quota
 
-### HR Side (HRM Portal)
-```
-HRM → Leaves → Leave Requests tab
-  Filter: Pending / Approved / Rejected
-  ✅ Approve → Balance deduct, notification
-  ❌ Reject → Reason fill karo, notification
-```
-
-### Leave Types & Balance
-| Type | Code | Annual Quota |
+| Code | Type | Annual Days |
 |---|---|---|
-| Earned Leave | EL | 12 days |
-| Sick Leave | SL | 12 days |
-| Casual Leave | CL | 8 days |
-| Optional Leave | OL | 2 days |
+| EL | Earned Leave | 12 days |
+| SL | Sick Leave | 12 days |
+| CL | Casual Leave | 8 days |
+| OL | Optional Leave | 2 days |
+
+### Leave Application Flow
+
+| Step | Portal | Action |
+|---|---|---|
+| 1 | EMP | Employee → My Leaves → Apply → Select type, dates, reason |
+| 2 | Backend | Balance check → if sufficient → status: `pending` |
+| 3 | HRM | HR → Leaves → Pending requests → Approve ✅ or Reject ❌ |
+| 4 | On Approve | Leave balance deducted + employee notification sent |
+| 5 | On Reject | Reason saved + employee notification sent |
+
+> Employee can cancel a **pending** leave before it is reviewed by HR.
 
 ---
 
-## 11. Payroll Flow — Preview se Slip tak
+## 12. Payroll & Salary System
 
-### Step 1: Preview
-```
-HRM → Payroll → "Run Payroll Preview"
-Backend calculate karta hai:
-  Gross = Basic + HRA(40%) + Conv(₹1600) + Medical(₹1250) + Special
-  PF = 12% of Basic (max ₹15,000)
-  ESI = 0.75% of Gross (sirf if Gross ≤ ₹21,000)
-  PT = ₹200
-  LWP Deduction = (Gross / 26) × LWP Days
-  Net = Gross - PF - ESI - PT - LWP Deduction
-```
+### Salary Components Calculation
 
-### Step 2: Process
-```
-"Process Payroll" → Confirmation → Cannot undo
-→ Har employee ke liye salary slip generate
-→ Status: "processed"
-```
+| Component | Formula |
+|---|---|
+| Basic Salary | Set by HR per employee |
+| HRA | 40% of Basic |
+| Conveyance | ₹1,600 (fixed) |
+| Medical Allowance | ₹1,250 (fixed) |
+| Special Allowance | CTC/12 − Basic − HRA − Conv − Medical |
+| **Gross Salary** | Basic + HRA + Conv + Medical + Special |
+| PF (Employee) | 12% of Basic (max ₹15,000 ceiling) |
+| ESI | 0.75% of Gross (only if Gross ≤ ₹21,000) |
+| Professional Tax | ₹200 (fixed) |
+| LWP Deduction | (Gross ÷ Working Days) × Absent Days |
+| **Net Salary** | Gross − PF − ESI − PT − LWP |
 
-### Step 3: Mark Paid
-```
-Payroll History → "Mark Paid" → Status: "paid"
-→ Employees ko notification
-```
+### Payroll Processing Flow
 
-### Step 4: Employee Slip Download
-```
-EMP → Salary → Salary Slips → View → ⬇️ Download PDF
-PDF mein: Employee details, earnings table, deductions table, net salary, bank details
-```
+| Step | Action |
+|---|---|
+| 1 | HRM → Payroll → **Run Payroll Preview** |
+| 2 | Review — verify every employee's gross, deductions, LWP, net |
+| 3 | Click **Process Payroll** → confirm (irreversible) |
+| 4 | System generates individual salary slips for all employees |
+| 5 | Click **Mark as Paid** when salaries are disbursed |
+| 6 | Employees see new slip in EMP → Salary → Salary Slips |
+
+### Salary Slip PDF
+
+Employees can view and download professional salary slips from the EMP portal.
+
+| PDF Contains |
+|---|
+| Company header (DigiKraft Social, GST number, address) |
+| Employee details — name, ID, department, designation |
+| Pay period, working days, days present, LWP |
+| Earnings table (Basic, HRA, Conveyance, Medical, Special) |
+| Deductions table (PF, ESI, Professional Tax) |
+| Net Salary (highlighted) |
+| Bank account details (last 4 digits masked) |
 
 ---
 
-## 12. Holiday Calendar
+## 13. Holiday Calendar
 
 ### HRM Portal (`/hrm/dashboard/holidays`)
-```
-Year filter (2024/2025/2026/2027)
-"Import Preset" → India ke major holidays auto-import
-Add/Edit/Delete individual holidays
 
-Holiday Types:
-  National (Red)  → Republic Day, Independence Day, Diwali
-  Optional (Yellow) → Festivals
-  Regional (Blue)   → State-specific
-  Company (Purple)  → Office events, team outings
+| Feature | Detail |
+|---|---|
+| Year filter | 2024 / 2025 / 2026 / 2027 |
+| Import Preset | One-click import of India's major national holidays |
+| Add Holiday | Name, date, type, description |
+| Edit / Delete | Full CRUD management |
+| Upcoming strip | Next 3 upcoming holidays with days-remaining countdown |
 
-"Upcoming" strip → Next 3 holidays with days remaining
-```
+### Holiday Types
+
+| Type | Color | Examples |
+|---|---|---|
+| National | 🔴 Red | Republic Day, Independence Day, Gandhi Jayanti |
+| Optional | 🟡 Yellow | Regional festivals |
+| Regional | 🔵 Blue | State-specific holidays |
+| Company | 🟣 Purple | Team events, office closures |
 
 ### EMP Portal (`/emp/dashboard/holidays`)
-```
-Same calendar (read-only)
-"Next Holiday" highlight card → Naam, date, days remaining
-Past holidays fade out (50% opacity)
-Stats: Total | Passed | Upcoming | This Month
-```
+
+Read-only calendar view. Shows the **Next Holiday** highlight card with days remaining, past holidays grayed out.
 
 ---
 
-## 13. Announcements / Notice Board
+## 14. Announcements & Notice Board
 
-### HRM Portal (`/hrm/dashboard/announcements`)
-```
-HR ne broadcast message banana hai:
-  Title + Body text
-  Priority: 🟢 Low | 🟡 Medium | 🔴 High
-  Publish At: Schedule karo (blank = abhi)
-  Expires At: Auto-expire (blank = never)
-  
-Cards:
-  "● Live" badge (agar currently visible)
-  "Scheduled" badge (future publish date)
-  Read receipt count (👁 X read)
-  Edit → Update any field
-  Toggle Active/Inactive (pause karo)
-  Preview modal
+### HRM Portal — Create Announcements
 
-HR Manager bhi create kar sakta hai
-```
+| Field | Detail |
+|---|---|
+| Title | Announcement headline |
+| Body | Full message content |
+| Priority | 🔴 High · 🟡 Medium · 🟢 Low |
+| Publish At | Schedule for future date/time (blank = publish now) |
+| Expires At | Auto-expire after date (blank = never expires) |
+| Status toggle | Pause/unpublish any time |
 
-### EMP Portal (`/emp/dashboard/announcements`)
-```
-🚨 Urgent alert banner (agar High priority unread hai)
+HR Managers and HR Admins can both create announcements. Read receipt count (`👁 X read`) is visible on each announcement card.
 
-Announcement cards:
-  🔴🟡🟢 Priority icons
-  Unread = blue dot + bold title
-  Click/expand → Full message
-  Auto-mark read on expand
-  "Mark as Read" button bhi hai
+### EMP Portal — View Announcements
 
-EMP Sidebar pe badge:
-  Announcements nav item pe red number badge
-  Unread count (60 second refresh)
-```
+| Feature | Detail |
+|---|---|
+| Unread badge | Red number badge on sidebar "Announcements" link (auto-refreshes every 60s) |
+| 🚨 Urgent banner | Red alert at top if unread High-priority message exists |
+| Expand to read | Click announcement → expands full content → auto-marks as read |
+| Mark as Read | Manual button also available |
 
 ---
 
-## 14. Reports & Analytics
+## 15. Reports & Analytics
 
-### HRM Portal (`/hrm/dashboard/reports`)
+Location: HRM Portal → `/hrm/dashboard/reports`
 
-**4 tabs:**
+### Available Reports
 
-#### 👥 Headcount Report
-```
-Stats: Total, Active, Probation, Notice Period, Resigned, Terminated
-Charts:
-  By Department → Bar chart
-  By Employment Type → Table (Full Time / Part Time / Intern / Contract)
-  Monthly Joinings (last 12 months) → Bar chart
-Export: PDF download button
-```
+| Report | Description | Key Metrics |
+|---|---|---|
+| **Headcount** | Employee strength overview | Total, Active, Probation, Resigned; by Dept, by Type, Monthly Joinings chart |
+| **Attendance** | Month-wise attendance summary | Per-employee: Present, Late, Absent, On Leave, WFH, Total Hours |
+| **Leave Utilisation** | Annual leave analysis | By leave type (days used + requests), monthly distribution chart |
+| **Payroll Cost** | Payroll spend history | Total paid, average monthly net, per-month breakdown, cost trend chart |
 
-#### 📅 Attendance Report
-```
-Month + Year filter
-Har employee ke liye:
-  Present, Late, Absent, On Leave, WFH, Total Hours
-Totals row at bottom
-```
-
-#### 📋 Leave Report
-```
-Year filter
-By Leave Type → Days used + requests count
-Monthly Distribution → Bar chart (all 12 months)
-Total approved days, total requests
-```
-
-#### 💰 Payroll Report
-```
-Last 6 months payroll history
-Stats: Total Paid, Avg Monthly Net, Months Processed
-Table: Pay Period, Employees, Gross, PF, ESI, Net, Status
-Net Payout Trend → Bar chart
-```
+All reports support **PDF export** via the Download button.
 
 ---
 
-## 15. Onboarding Tracker
+## 16. Employee Onboarding Tracker
 
-### HRM Portal (`/hrm/dashboard/onboarding`)
-```
-Dikhaata hai: Recent joiners (last 90 days) + Probation employees
+Location: HRM Portal → `/hrm/dashboard/onboarding`
 
-Har employee ke liye 5-step checklist:
-  📧 Welcome Email Sent
-  📄 Documents Collected (Aadhaar, PAN, certificates)
-  💻 System Access Given (email, EMP login, tools)
-  🎓 Induction Completed (orientation, company policy)
-  🖥️ Equipment Issued (laptop, ID card, access card)
+Shows all employees who joined in the **last 90 days** plus employees on **probation**.
 
-Click on checkbox → auto-save
-Progress bar: 0% to 100%
-Badges: "Not Started" (red) | "In Progress" (yellow) | "Complete" (green)
+### 5-Step Onboarding Checklist
 
-Search by name/employee ID bhi hai
-```
+| Step | Icon | Task |
+|---|---|---|
+| 1 | 📧 | Welcome email sent — login credentials and company overview |
+| 2 | 📄 | Documents collected — Aadhaar, PAN, degree certificates, experience letters |
+| 3 | 💻 | System access given — work email, EMP portal login, tools and apps |
+| 4 | 🎓 | Induction completed — HR orientation, company policies, team introduction |
+| 5 | 🖥️ | Equipment issued — laptop, ID card, access cards |
+
+Each checkbox **auto-saves** on click. Progress bar shows 0–100% completion per employee.
 
 ---
 
-## 16. Team Directory
+## 17. Team Directory
 
-### EMP Portal (`/emp/dashboard/team`)
-```
-Department-wise grid of all active colleagues
-Search by name or email
-Filter by department
+Location: EMP Portal → `/emp/dashboard/team`
 
-Employee card:
-  Avatar (colored initials)
-  Name, Designation, Status (Active/Probation)
-  Click → Popup with:
-    - Full name, employee ID
-    - Department, designation
-    - Work email (clickable → opens email client)
-    - Phone (clickable → opens dialer)
-    - Date of joining
+All active employees displayed in a **department-wise card grid**.
 
-HR bhi dekh sakta hai sabhi employees (HRM Employees page se)
-```
+| Feature | Detail |
+|---|---|
+| Search | By name or email |
+| Filter | By department |
+| Employee card | Avatar (colored initials), name, designation, active/probation status |
+| Click card | Opens popup with email (clickable), phone (clickable), join date |
 
 ---
 
-## 17. New Employee Add karna — Full Flow
-
-```
-Step 1: HR → HRM → Employees → "Add Employee"
-  Fill: Full Name *, Work Email *, Phone
-        Department, Designation, Employment Type
-        Date of Joining, CTC, Basic Salary, Notes
-
-Step 2: System auto-generates:
-  Employee ID: DKS-EMP-001 (sequential)
-  Temp Password: firstname@year  (e.g. rahul@2026)
-  Response mein _temp_password field aata hai
-
-Step 3: HR emp ko password bheje (WhatsApp / email)
-
-Step 4: Employee /emp/login kare with temp password
-
-Step 5: Employee → My Profile → Change Password
-
-Step 6: HR → Onboarding page → 5-step checklist complete karo
-
-Step 7 (HR): Departments, Designation fill karo employee ke liye
-```
-
-### Employee Deactivate
-```
-HRM → Employees → Employee row → Deactivate
-  → Reason: Resigned / Terminated
-  → is_active: false
-  → Employee turant EMP portal se logout ho jaata hai
-  → Attendance/leaves/slips data remain
-```
-
----
-
-## 18. Roles & Permissions
+## 18. Roles & Permissions Matrix
 
 ### CRM Portal
 
-| Section | owner | manager | accountant | executive |
+| Module | `owner` | `manager` | `accountant` | `executive` |
 |---|:---:|:---:|:---:|:---:|
 | Clients | ✅ | ✅ | ❌ | ✅ |
 | Projects | ✅ | ✅ | ❌ | ✅ |
@@ -846,288 +737,240 @@ HRM → Employees → Employee row → Deactivate
 | Quotations | ✅ | ✅ | ❌ | ❌ |
 | Invoices | ✅ | ✅ | ✅ | ❌ |
 | Payments | ✅ | ✅ | ✅ | ❌ |
+| Portfolio | ✅ | ✅ | ❌ | ❌ |
+| Enquiries | ✅ | ✅ | ❌ | ✅ |
 | Pending Users | ✅ | ✅ | ❌ | ❌ |
 | Settings | ✅ | ✅ | ❌ | ❌ |
 
 ### HRM Portal
 
-| Section | hr_admin | hr_manager | dept_manager |
+| Module | `hr_admin` | `hr_manager` | `dept_manager` |
 |---|:---:|:---:|:---:|
-| View all employees | ✅ | ✅ | Own dept |
-| Edit employees | ✅ | ✅ | ❌ |
-| **Salary + Bank — View** | ✅ | ✅ | ❌ |
-| **Salary + Bank — Edit** | ✅ | ✅ | ❌ |
-| Reset EMP password | ✅ | ❌ | ❌ |
-| Deactivate employee | ✅ | ❌ | ❌ |
-| Attendance | ✅ | ✅ | Own dept |
-| Regularization approve | ✅ | ✅ | Own dept |
-| Approve leaves | ✅ | ✅ | Own dept |
-| Process payroll | ✅ | ✅ | ❌ |
-| **Assign tasks** | ✅ | ✅ | ❌ |
-| **View daily log** | ✅ | ✅ | Own dept |
-| Departments/Designations | ✅ | ❌ | ❌ |
-| **Holidays — manage** | ✅ | ✅ | View only |
-| **Announcements — create** | ✅ | ✅ | ❌ |
-| **Reports** | ✅ | ✅ | ❌ |
-| **Onboarding checklist** | ✅ | ✅ | ❌ |
-| Pending HRM users | ✅ | ❌ | ❌ |
+| All Employees | ✅ | ✅ | Own Dept |
+| Add/Edit Employee | ✅ | ✅ | ❌ |
+| Salary & Bank (View + Edit) | ✅ | ✅ | ❌ |
+| Reset EMP Password | ✅ | ❌ | ❌ |
+| Deactivate Employee | ✅ | ❌ | ❌ |
+| Attendance | ✅ | ✅ | Own Dept |
+| Approve Leaves | ✅ | ✅ | Own Dept |
+| Process Payroll | ✅ | ✅ | ❌ |
+| Assign Tasks | ✅ | ✅ | ❌ |
+| View Task Logs | ✅ | ✅ | Own Dept |
+| Holidays (Manage) | ✅ | ✅ | View Only |
+| Create Announcements | ✅ | ✅ | ❌ |
+| Reports | ✅ | ✅ | ❌ |
+| Onboarding Checklist | ✅ | ✅ | ❌ |
+| History + Delete | ✅ | View Only | ❌ |
+| Approve HRM Users | ✅ | ❌ | ❌ |
 | Settings | ✅ | ❌ | ❌ |
 
 ### EMP Portal
 
-| Action | Employee |
-|---|:---:|
-| Check In / Check Out | ✅ |
-| View own attendance | ✅ |
-| Request regularization | ✅ |
-| **Add own daily tasks** | ✅ |
-| **Update HR-assigned task status** | ✅ |
-| **Comment on assigned tasks** | ✅ |
-| Apply for leave | ✅ |
-| Cancel own pending leave | ✅ |
-| View leave balance | ✅ |
-| View own salary slips + PDF | ✅ |
-| View CTC breakup | ✅ |
-| Edit own contact info | ✅ |
-| Change own password | ✅ |
-| View bank details (read-only) | ✅ |
-| **View holiday calendar** | ✅ |
-| **View announcements + comment** | ✅ |
-| **View team directory** | ✅ |
-| Edit bank details | ❌ HR karta hai |
-| Approve others' leaves | ❌ |
-| View others' salary | ❌ |
+All employees have the same level. They can only see and modify **their own data**.
 
 ---
 
-## 19. Security Features
+## 19. Security Architecture
 
-| Feature | CMS | CRM | HRM | EMP |
-|---|:---:|:---:|:---:|:---:|
-| bcrypt hashing (rounds) | ✅ r10 | ✅ r12 | ✅ r12 | ✅ r12 |
-| JWT portal claim isolation | ❌ | ✅ | ✅ | ✅ |
-| Rate limiting (10/15min) | ❌ | ✅ | ✅ | ✅ |
-| Brute-force lockout (5→30min) | ❌ | ❌ | ✅ | ✅ |
-| Account approval gate | ❌ | ✅ | ✅ | ✅ |
-| Live DB token verify | ❌ | ✅ | ✅ | ✅ |
-| RBAC guards | ✅ basic | ✅ 4-level | ✅ 4-level | ✅ |
-| Dept scope restriction | ❌ | ❌ | ✅ | ❌ |
-| Sensitive field masking | ❌ | ❌ | ✅ (dept_mgr) | ✅ |
+### Implemented Security Measures
 
-### Portal Isolation
-```
-CRM token → HRM API → ❌ "Invalid portal token"
-HRM token → EMP API → ❌ "Invalid portal token"
-EMP token → CRM API → ❌ "Invalid portal token"
-```
+| Layer | Measure | Detail |
+|---|---|---|
+| **Headers** | `helmet` | X-Frame-Options, HSTS, X-Content-Type, Referrer-Policy, and more |
+| **Injection** | `express-mongo-sanitize` | Strips `$` and `.` from all inputs — blocks NoSQL injection |
+| **Pollution** | `hpp` | HTTP Parameter Pollution prevention |
+| **Body Size** | Request limit | `10kb` cap on JSON and URL-encoded bodies |
+| **HTTPS** | Redirect | Auto `301` redirect in `NODE_ENV=production` |
+| **Passwords** | `bcryptjs` | 12 rounds of hashing (stronger than industry standard of 10) |
+| **JWT** | Per-portal secrets | 4 separate 128-character secrets — one per portal |
+| **Token Isolation** | Portal claim check | `portal: 'crm'` claim verified — CRM token rejected on HRM/EMP APIs |
+| **Rate Limiting** | Login endpoints | 10 requests per 15 minutes per IP |
+| **Brute Force** | Account lockout | 5 failed attempts → 30-minute automatic lock (all 3 portals) |
+| **Input Validation** | Auth controllers | Email format regex, password minimum length, field length caps |
+| **Approval Gate** | New accounts | All new users start `is_active: false` — manual approval required |
+| **Dept Scope** | `dept_manager` | API queries auto-filtered to manager's department only |
+| **Error Masking** | Production mode | `500` errors never expose stack traces or internal messages |
+| **Sensitive Fields** | API responses | Aadhaar, account number, PAN never returned to non-admin roles |
 
-### Account Lockout
-```
-5 wrong passwords → 30 min lock → Auto unlock
-Manual unlock: MongoDB → set login_attempts:0, locked_until:null
-```
+### Brute-Force Lockout (All Portals)
 
----
-
-## 20. All Credentials — Quick Reference
-
-```
-╔════════════════════════════════════════════════════════════════════╗
-║                    ALL PORTAL CREDENTIALS                         ║
-╠══════════════╦════════════════════════════╦══════════════════╦═══╣
-║  PORTAL      ║  EMAIL / LOGIN              ║  PASSWORD        ║ ROLE ║
-╠══════════════╬════════════════════════════╬══════════════════╬═══╣
-║  CMS         ║  srdani12@gmail.com         ║ digikraftsocial  ║ superadmin ║
-║              ║                             ║ @2026            ║     ║
-╠══════════════╬════════════════════════════╬══════════════════╬═══╣
-║  CRM         ║  admin@digikraftsocial.com  ║ Dks@Admin2024    ║ owner ║
-╠══════════════╬════════════════════════════╬══════════════════╬═══╣
-║  HRM Admin   ║  hradmin@                   ║ HRM@Admin2024    ║ hr_admin ║
-║              ║  digikraftsocial.com        ║                  ║     ║
-╠══════════════╬════════════════════════════╬══════════════════╬═══╣
-║  HRM Manager ║  hrmanager@                 ║ HRM@Manager2024  ║ hr_manager ║
-║              ║  digikraftsocial.com        ║                  ║     ║
-╠══════════════╬════════════════════════════╬══════════════════╬═══╣
-║  EMP         ║  rahul@digikraftsocial.com  ║ EMP@Rahul2024    ║ DKS-EMP-001 ║
-╚══════════════╩════════════════════════════╩══════════════════╩═══╝
-
-Portal Chooser:  http://localhost:3000/portals
-Backend Port:    5000
-Frontend Port:   3000
-Database:        MongoDB Atlas → dks-website
-```
-
-### Login URLs
-| Portal | Local URL |
+| Attempt | Response |
 |---|---|
-| CMS | `http://localhost:3000/admin/login` |
-| CRM | `http://localhost:3000/crm/login` |
-| HRM | `http://localhost:3000/hrm/login` |
-| EMP | `http://localhost:3000/emp/login` |
-| Portal Chooser | `http://localhost:3000/portals` |
+| 1–4 wrong passwords | `401 Invalid credentials` |
+| 5th wrong password | `423 Account locked for 30 minutes` |
+| After 30 minutes | Auto-unlock — can try again |
 
----
+> **Manual unlock (if needed):** In MongoDB, set `login_attempts: 0` and `locked_until: null` for the user document.
 
-## 21. API Endpoints Reference
+### Portal Token Isolation
 
-### EMP Task APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/emp/tasks?date=2026-10-08` | Own tasks for a date |
-| GET | `/api/emp/tasks/history?from=&to=` | Own tasks history |
-| GET | `/api/emp/tasks/summary?date=` | Stats for a date |
-| GET | `/api/emp/tasks/assigned` | HR-assigned active tasks |
-| GET | `/api/emp/tasks/assigned-history` | HR-assigned completed |
-| POST | `/api/emp/tasks` | Add own task |
-| PATCH | `/api/emp/tasks/:id` | Update task |
-| POST | `/api/emp/tasks/:id/comment` | Add comment |
-| DELETE | `/api/emp/tasks/:id` | Delete own task |
-
-### HRM Task APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/hrm/tasks/daily?date=&department=` | All employees tasks for date |
-| GET | `/api/hrm/tasks/summary?date=` | Team summary |
-| GET | `/api/hrm/tasks/employee-history?employee_id=` | One employee history |
-| GET | `/api/hrm/tasks/assigned?status=&priority=&employee_id=` | All assigned tasks |
-| POST | `/api/hrm/tasks/assign` | Assign to one employee |
-| POST | `/api/hrm/tasks/bulk-assign` | Assign to many employees |
-| PATCH | `/api/hrm/tasks/assigned/:id` | Update assigned task |
-| DELETE | `/api/hrm/tasks/assigned/:id` | Delete assigned task |
-| POST | `/api/hrm/tasks/:id/comment` | HR comment |
-
-### EMP Attendance APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/emp/attendance/checkin` | Check in |
-| POST | `/api/emp/attendance/checkout` | Check out |
-| GET | `/api/emp/attendance/today` | Today's record |
-| GET | `/api/emp/attendance/history?month=&year=` | Monthly history |
-| POST | `/api/emp/attendance/regularize` | Regularization request |
-
-### EMP Leave APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/emp/leaves` | Apply leave |
-| GET | `/api/emp/leaves` | My leave requests |
-| PATCH | `/api/emp/leaves/:id/cancel` | Cancel pending |
-| GET | `/api/emp/leaves/balance` | Current balance |
-| GET | `/api/emp/leaves/types` | Leave types |
-
-### EMP Salary APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/emp/salary/slips` | All slips |
-| GET | `/api/emp/salary/slips/:id` | One slip |
-| GET | `/api/emp/salary/ctc` | CTC breakup |
-
-### HRM Holiday APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/hrm/holidays?year=2026` | List holidays |
-| POST | `/api/hrm/holidays` | Add holiday |
-| PATCH | `/api/hrm/holidays/:id` | Update |
-| DELETE | `/api/hrm/holidays/:id` | Delete |
-| POST | `/api/hrm/holidays/import-preset` | India preset import |
-
-### HRM Announcement APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/hrm/announcements` | All (HRM admin view) |
-| POST | `/api/hrm/announcements` | Create |
-| PATCH | `/api/hrm/announcements/:id` | Update |
-| DELETE | `/api/hrm/announcements/:id` | Delete |
-| GET | `/api/emp/announcements` | Live (EMP view) |
-| PATCH | `/api/emp/announcements/:id/read` | Mark read |
-
-### HRM Report APIs
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/hrm/reports/headcount` | Headcount report |
-| GET | `/api/hrm/reports/attendance?month=&year=` | Attendance |
-| GET | `/api/hrm/reports/leave?year=` | Leave utilisation |
-| GET | `/api/hrm/reports/payroll?months=6` | Payroll cost |
-
-### EMP Team & Directory
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/emp/team?search=&department=` | Team directory |
-| GET | `/api/emp/holidays?year=` | Holiday calendar |
-
----
-
-## 22. Troubleshooting
-
-### MongoDB Connection Error
 ```
-MongooseServerSelectionError: Could not connect to any servers
-→ Atlas → Network Access → Add Current IP → Confirm → 2 min wait
+CRM Token → HRM API  →  ❌  401 "Invalid portal token"
+HRM Token → EMP API  →  ❌  401 "Invalid portal token"
+EMP Token → CRM API  →  ❌  401 "Invalid portal token"
 ```
 
-### Google Font Warning (harmless)
-```
-⨯ Failed to download Urbanist from Google Fonts. Using fallback font instead.
-→ App kaam karta rehta hai — sirf warning hai
-→ Fixed: layout.js mein preload: false add kar diya gaya hai
-```
+### Production Security Checklist
 
-### Login Failed — Account locked
-```
-5 baar galat password → 30 min lock
-→ Wait 30 min → auto unlock
-OR MongoDB mein: set login_attempts: 0, locked_until: null
-```
-
-### Login Failed — Account pending
-```
-HRM: HR Admin → /hrm/dashboard/pending-users → Approve
-CRM: Owner → /crm/dashboard/pending-users → Approve
-EMP: HR Admin → check is_active in /hrm/dashboard/employees
-```
-
-### EMP Check-In button nahi dikh raha
-```
-Already checked in? → "Check Out" button dikhega
-Already checked out? → "✅ Day Complete" message dikhega
-Backend running? → npm start terminal check karo
-```
-
-### HR-Assigned task EMP ko nahi dikh raha
-```
-/api/emp/tasks/assigned → status filter check karo
-Default: only "todo", "in_progress", "blocked" show hote hain
-Completed tab mein "done" tasks hain
-```
-
-### PDF Download nahi ho raha
-```
-Browser pop-up blocker OFF karo
-Backend running hai confirm karo (port 5000)
-Console mein error dekho (F12 → Console)
-```
-
----
-
-## System Summary — What's New in v4.0
-
-| Feature | Where |
+| Item | Action Required |
 |---|---|
-| ✅ **Task Management** — Employee daily log + HR assign + Kanban board + Comments | HRM + EMP |
-| ✅ **Holiday Calendar** — Manage + India preset import | HRM + EMP |
-| ✅ **Announcements** — Priority broadcast, schedule, read receipts, sidebar badge | HRM + EMP |
-| ✅ **Reports** — Headcount, Attendance, Leave, Payroll charts | HRM |
-| ✅ **Onboarding Tracker** — 5-step checklist per new employee | HRM |
-| ✅ **Team Directory** — Department-wise, search, contact popup | EMP |
-| ✅ **Salary & Bank visible to hr_manager** (not just hr_admin) | HRM |
-| ✅ **Employee Detail Page** — 5 tabs with edit, reset password | HRM |
-| ✅ **Salary Slip Detail Page** — Professional PDF | HRM |
-| ✅ **Payroll route fix** — slips before :month/:year params | Backend |
-| ✅ **CSS improvements** — emp-tabs, emp-search-bar, task classes | Frontend |
+| JWT Secrets | Generate new 64-byte secrets for production server |
+| MongoDB Atlas | Whitelist production server IP only |
+| NODE_ENV | Set to `production` |
+| CORS | Set `CORS_ORIGIN` to production domain only |
+| HTTPS | Ensure SSL certificate is active |
+| Credentials | Change all default passwords before go-live |
 
 ---
 
-*DigiKraft Social Documentation v4.0 — October 2026*
-*Portals: CMS · CRM · HRM · EMP*
-*Backend: Node.js + Express + MongoDB Atlas*
-*Frontend: Next.js 14*
-*Document covers all features added from v1.0 to v4.0*
+## 20. Server Setup & Commands
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB Atlas account with IP whitelisted
+- Git
+
+### Start Development Servers
+
+```bash
+# Terminal 1 — Backend API (Port 5000)
+cd DKS-WEBSITE_latest-deployed/backend
+npm start
+
+# Terminal 2 — Frontend (Port 3000)
+cd DKS-WEBSITE_latest-deployed/website
+npm run dev
+```
+
+### Environment Variables (backend/.env)
+
+| Variable | Purpose |
+|---|---|
+| `NODE_ENV` | `development` or `production` |
+| `PORT` | Server port (default: 5000) |
+| `MONGO_URI` | MongoDB Atlas connection string |
+| `JWT_SECRET` | CMS portal JWT signing key |
+| `JWT_CRM_SECRET` | CRM portal JWT signing key |
+| `JWT_HRM_SECRET` | HRM portal JWT signing key |
+| `JWT_EMP_SECRET` | EMP portal JWT signing key |
+| `CORS_ORIGIN` | Comma-separated list of allowed frontend origins |
+
+> **Generate a JWT secret:**
+> ```bash
+> node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+> ```
+
+---
+
+## 21. API Reference
+
+### Authentication Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/crm/auth/login` | ❌ | CRM login |
+| POST | `/api/hrm/auth/login` | ❌ | HRM login |
+| POST | `/api/emp/auth/login` | ❌ | EMP login |
+| GET | `/api/hrm/auth/verify` | ✅ HRM | Verify token + live DB check |
+| GET | `/api/emp/auth/verify` | ✅ EMP | Verify token |
+| GET | `/api/hrm/auth/pending-users` | ✅ Admin | Pending HRM registrations |
+| PUT | `/api/hrm/auth/users/:id/approve` | ✅ Admin | Approve + assign role |
+
+### Employee Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/hrm/employees` | ✅ HRM | List all employees |
+| POST | `/api/hrm/employees` | ✅ Manager+ | Add new employee |
+| GET | `/api/hrm/employees/:id` | ✅ HRM | Employee detail |
+| PATCH | `/api/hrm/employees/:id` | ✅ HRM | Update employee |
+| PUT | `/api/hrm/employees/:id/deactivate` | ✅ Manager+ | Deactivate |
+| POST | `/api/hrm/employees/:id/reset-password` | ✅ Admin | Reset EMP password |
+
+### Attendance Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/emp/attendance/checkin` | ✅ EMP | Employee check-in |
+| POST | `/api/emp/attendance/checkout` | ✅ EMP | Employee check-out |
+| GET | `/api/emp/attendance/history` | ✅ EMP | Monthly history |
+| GET | `/api/hrm/attendance` | ✅ HRM | Daily view (all employees) |
+| PATCH | `/api/hrm/attendance/regularizations/:id` | ✅ HRM | Approve/reject request |
+
+### Task Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/emp/tasks` | ✅ EMP | My tasks for a date |
+| POST | `/api/emp/tasks` | ✅ EMP | Add own task |
+| PATCH | `/api/emp/tasks/:id` | ✅ EMP | Update task / status |
+| POST | `/api/emp/tasks/:id/comment` | ✅ EMP | Add comment |
+| GET | `/api/emp/tasks/assigned` | ✅ EMP | HR-assigned active tasks |
+| POST | `/api/hrm/tasks/assign` | ✅ Manager+ | Assign task to employee |
+| POST | `/api/hrm/tasks/bulk-assign` | ✅ Manager+ | Assign to multiple employees |
+| GET | `/api/hrm/tasks/assigned` | ✅ HRM | All assigned tasks (kanban) |
+| POST | `/api/hrm/tasks/:id/comment` | ✅ HRM | HR comment on task |
+
+### Payroll Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/hrm/payroll/preview` | ✅ Manager+ | Preview month's payroll |
+| POST | `/api/hrm/payroll/process` | ✅ Manager+ | Process and generate slips |
+| PATCH | `/api/hrm/payroll/:month/:year/mark-paid` | ✅ Manager+ | Mark as paid |
+| GET | `/api/emp/salary/slips` | ✅ EMP | My salary slips |
+| GET | `/api/emp/salary/slips/:id` | ✅ EMP | Single slip (for PDF) |
+| GET | `/api/emp/salary/ctc` | ✅ EMP | CTC breakup |
+
+### Other Key Endpoints
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/hrm/holidays` | ✅ HRM | Holiday list |
+| POST | `/api/hrm/holidays/import-preset` | ✅ Manager+ | Import India holidays |
+| GET | `/api/emp/holidays` | ✅ EMP | Holiday calendar |
+| GET | `/api/hrm/announcements` | ✅ HRM | All announcements |
+| POST | `/api/hrm/announcements` | ✅ Manager+ | Create announcement |
+| GET | `/api/emp/announcements` | ✅ EMP | Live announcements |
+| GET | `/api/hrm/reports/headcount` | ✅ Manager+ | Headcount report |
+| GET | `/api/hrm/reports/attendance` | ✅ Manager+ | Attendance report |
+| GET | `/api/hrm/reports/payroll` | ✅ Manager+ | Payroll cost report |
+| GET | `/api/emp/team` | ✅ EMP | Team directory |
+| DELETE | `/api/hrm/history/:id` | ✅ Admin | Delete single history record |
+| DELETE | `/api/hrm/history/clear` | ✅ Admin | Clear history (with filters) |
+
+---
+
+## 22. Troubleshooting Guide
+
+| Issue | Cause | Solution |
+|---|---|---|
+| `MongooseServerSelectionError` | IP not whitelisted on Atlas | Atlas → Network Access → Add Current IP → Confirm → wait 2 min |
+| `Failed to download Urbanist font` | Google Fonts blocked on network | Harmless warning — app works normally. Fixed with `preload: false` in `layout.js` |
+| Login error — `Account locked` | 5+ wrong password attempts | Wait 30 minutes OR set `login_attempts: 0`, `locked_until: null` in MongoDB |
+| Login error — `Account pending approval` | New user not yet approved | HRM: HR Admin → Pending Users → Approve / CRM: Owner → Pending Users → Approve |
+| Login error — `Invalid portal token` | Using wrong portal's token | Log out completely, clear localStorage, log in again |
+| Check-in button not visible | Already checked in or day complete | Button changes to Check Out after check-in, disappears after checkout |
+| PDF not downloading | Pop-up blocker active | Disable browser pop-up blocker for this site |
+| HR-assigned task not showing in EMP | Task already completed | Check the "Completed" tab in HR Assigned section |
+| `npm run dev` slow start | Google font timeout | Fixed with `preload: false` — startup is fast now |
+| Backend `'next' is not recognized` | `node_modules` corrupted | Run: `Remove-Item -Recurse -Force node_modules` then `npm install` |
+
+---
+
+## Appendix — Feature Release History
+
+| Version | Date | Key Features Added |
+|---|---|---|
+| v1.0 | Aug 2026 | CMS Portal (existing), CRM Portal (14 modules, PDF, RBAC) |
+| v2.0 | Sep 2026 | HRM Portal (10 modules, payroll, attendance), EMP Portal (6 modules) |
+| v3.0 | Oct 2026 | Employee detail page (5 tabs), Salary slip detail, payroll route fix |
+| v4.0 | Oct 2026 | Task Management, Holiday Calendar, Announcements, Reports, Onboarding, Team Directory, Announcement badge, hr_manager salary access |
+| v4.1 | Oct 2026 | **Security hardening** — helmet, mongo-sanitize, HPP, per-portal JWT secrets, CRM brute-force, HTTPS redirect, body limits, error masking |
+
+---
+
+*DigiKraft Social — Internal System Documentation v5.0*
+*Confidential — For internal use only*
+*GitHub: https://github.com/DIGICRAFT-INFO/digikraft_website*
