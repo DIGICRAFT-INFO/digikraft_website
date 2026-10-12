@@ -75,9 +75,23 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // ══════════════════════════════════════════════════════════════════
-// 5. NoSQL INJECTION SANITIZE — strip $ and . from req.body/params/query
+// 5. NoSQL INJECTION SANITIZE
+// express-mongo-sanitize is incompatible with Express 5 read-only
+// req.query getter — manually sanitize body and params only.
 // ══════════════════════════════════════════════════════════════════
-app.use(mongoSanitize());
+app.use((req, res, next) => {
+  // Sanitize req.body (writable in Express 5)
+  if (req.body) {
+    req.body = mongoSanitize.sanitize(req.body);
+  }
+  // Sanitize req.params (writable in Express 5)
+  if (req.params) {
+    req.params = mongoSanitize.sanitize(req.params);
+  }
+  // NOTE: req.query is read-only in Express 5 — we validate query params
+  // at the controller level instead of sanitizing here globally.
+  next();
+});
 
 // ══════════════════════════════════════════════════════════════════
 // 6. HTTP PARAMETER POLLUTION PREVENTION
