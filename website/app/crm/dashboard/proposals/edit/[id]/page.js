@@ -32,6 +32,8 @@ export default function EditProposalPage() {
         valid_until: p.valid_until ? p.valid_until.split("T")[0] : "",
         notes:       p.notes||"",
         services:    p.services?.map(s=>s.id||s)||[],
+        _projectMode: "select",
+        client_name_direct: "",
       });
     } catch { router.replace("/crm/dashboard/proposals"); }
   }, [id, router]);
@@ -45,7 +47,8 @@ export default function EditProposalPage() {
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setErr(""); setSaveOk("");
     try {
-      await CRM_API.patch(`/proposals/${id}`, form);
+      const { _projectMode, ...payload } = form;
+      await CRM_API.patch(`/proposals/${id}`, payload);
       setSaveOk("Saved!"); setTimeout(()=>setSaveOk(""),3000);
     } catch (ex) { setErr(ex.response?.data?.message||"Save failed"); }
     finally { setSaving(false); }
@@ -74,11 +77,26 @@ export default function EditProposalPage() {
           {err && <div style={{ background:"#fee2e2",color:"#dc2626",padding:"11px 15px",borderRadius:8,fontSize:13 }}>{err}</div>}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
             <div>
-              <label style={lbl}>Project <span style={{color:"#ef4444"}}>*</span></label>
-              <select value={form.project} onChange={e=>setForm(p=>({...p,project:e.target.value}))} required style={inp}>
-                <option value="">Select…</option>
-                {projects.map(p=><option key={p.id} value={p.id}>{p.name} {p.client_name_snapshot?`— ${p.client_name_snapshot}`:""}</option>)}
-              </select>
+              <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6 }}>
+                <label style={lbl}>Project / Client <span style={{fontSize:11,color:"#94a3b8",fontWeight:400}}>(optional)</span></label>
+                <div style={{ display:"flex",gap:2,background:"#f1f5f9",borderRadius:8,padding:2 }}>
+                  {["select","name"].map(m=>(
+                    <button key={m} type="button" onClick={()=>setForm(p=>({...p,_projectMode:m,project:"",client_name_direct:""}))}
+                      style={{ padding:"3px 10px",borderRadius:6,border:"none",fontSize:10,fontWeight:700,cursor:"pointer",background:form._projectMode===m?"#fff":"transparent",color:form._projectMode===m?"#0f172a":"#64748b" }}>
+                      {m==="select"?"Select":"Name"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {(!form._projectMode || form._projectMode==="select") ? (
+                <select value={form.project} onChange={e=>setForm(p=>({...p,project:e.target.value}))} style={inp}>
+                  <option value="">— None (no project) —</option>
+                  {projects.map(p=><option key={p.id} value={p.id}>{p.name} {p.client_name_snapshot?`— ${p.client_name_snapshot}`:""}</option>)}
+                </select>
+              ) : (
+                <input value={form.client_name_direct||""} onChange={e=>setForm(p=>({...p,client_name_direct:e.target.value}))}
+                  style={inp} placeholder="e.g. ABC Technologies"/>
+              )}
             </div>
             <div>
               <label style={lbl}>Status</label>

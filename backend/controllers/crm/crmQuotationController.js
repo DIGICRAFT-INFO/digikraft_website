@@ -60,17 +60,22 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { project: projectId, items = [], discount_type = 'fixed', discount_value = 0, cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
-    const project = await CrmProject.findById(projectId).populate('client');
+    const { project: projectId, client_name_direct, items = [], discount_type = 'fixed', discount_value = 0, cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
+
+    // Project is now OPTIONAL — can pass client_name_direct instead
+    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
     const quote_number = await genQuoteNumber();
     const totals = calcTotals(items, discount_type, discount_value, cgst_rate, sgst_rate, igst_rate);
 
     const client = project?.client || null;
+    // Use direct client name if no project selected
+    const resolvedClientName = client?.full_name || client?.company_name || project?.client_name_snapshot || client_name_direct || '';
+
     const quotation = await CrmQuotation.create({
-      project: projectId,
+      project: projectId || null,
       quote_number,
       project_name_snapshot:   project?.name || '',
-      client_name_snapshot:    client?.full_name || client?.company_name || project?.client_name_snapshot || '',
+      client_name_snapshot:    resolvedClientName,
       client_gstin_snapshot:   client?.gstin || '',
       client_address_snapshot: client?.billing_address || '',
       client_state_snapshot:   client?.state || '',

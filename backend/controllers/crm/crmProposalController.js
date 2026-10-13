@@ -50,14 +50,16 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { project: projectId, ...rest } = req.body;
-    const project = await CrmProject.findById(projectId).populate('client');
+    const { project: projectId, client_name_direct, ...rest } = req.body;
+    // Project is now OPTIONAL
+    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
     const prop_number = await genPropNumber();
+    const resolvedClientName = project?.client?.full_name || project?.client?.company_name || project?.client_name_snapshot || client_name_direct || '';
     const proposal = await CrmProposal.create({
-      project: projectId,
+      project: projectId || null,
       prop_number,
       project_name_snapshot: project?.name || '',
-      client_name_snapshot: project?.client?.full_name || '',
+      client_name_snapshot:  resolvedClientName,
       ...rest,
     });
     await log(req, 'created', proposal._id, proposal.title, `Created proposal: ${proposal.prop_number}`);

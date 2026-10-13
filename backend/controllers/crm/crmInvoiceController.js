@@ -59,21 +59,25 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { project: projectId, items = [], cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
-    const project = await CrmProject.findById(projectId).populate('client');
+    const { project: projectId, client_name_direct, items = [], cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
+
+    // Project is now OPTIONAL — can pass client_name_direct instead
+    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
     const invoice_number = await genInvNumber();
     const totals = calcTotals(items, cgst_rate, sgst_rate, igst_rate);
 
-    // Pull client details for snapshots
     const CrmClient = require('../../models/crm/CrmClient');
     const client = project?.client
       ? (typeof project.client === 'object' ? project.client : await CrmClient.findById(project.client))
       : null;
 
+    // Use direct client name if no project selected
+    const resolvedClientName = client?.full_name || client?.company_name || project?.client_name_snapshot || client_name_direct || '';
+
     const invoice = await CrmInvoice.create({
-      project: projectId, invoice_number,
+      project: projectId || null, invoice_number,
       project_name_snapshot:   project?.name || '',
-      client_name_snapshot:    client?.full_name || client?.company_name || project?.client_name_snapshot || '',
+      client_name_snapshot:    resolvedClientName,
       client_gstin_snapshot:   client?.gstin || '',
       client_address_snapshot: client?.billing_address || '',
       client_state_snapshot:   client?.state || '',

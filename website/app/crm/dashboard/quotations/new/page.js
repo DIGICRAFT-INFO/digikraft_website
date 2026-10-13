@@ -21,6 +21,8 @@ export default function NewQuotationPage() {
     discount_type:"fixed", discount_value:0,
     cgst_rate:9, sgst_rate:9, igst_rate:0,
     hsn_sac:"998319", place_of_supply:"Chhattisgarh", notes:"",
+    _projectMode: projectId ? "select" : "select",
+    client_name_direct: "",
   });
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState("");
@@ -57,7 +59,8 @@ export default function NewQuotationPage() {
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setErr("");
     try {
-      await CRM_API.post("/quotations", { ...form, items: items.filter(i=>i.description) });
+      const { _projectMode, ...payload } = form;
+      await CRM_API.post("/quotations", { ...payload, items: items.filter(i=>i.description) });
       if (clientId) router.push(`/crm/dashboard/clients/${clientId}`);
       else          router.push("/crm/dashboard/quotations");
     } catch (ex) { setErr(ex.response?.data?.message||"Save failed"); }
@@ -94,13 +97,32 @@ export default function NewQuotationPage() {
 
           {/* Project + Valid Until */}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
-            <div>
-              <label style={lbl}>Project <span style={{color:"#ef4444"}}>*</span></label>
-              <select value={form.project} onChange={e=>setForm(p=>({...p,project:e.target.value}))} required style={inp}>
-                <option value="">Select project…</option>
+          {/* Project field — Select existing OR type client name */}
+          <div>
+            <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6 }}>
+              <label style={lbl}>Project / Client <span style={{fontSize:11,color:"#94a3b8",fontWeight:400}}>(optional)</span></label>
+              <div style={{ display:"flex",gap:2,background:"#f1f5f9",borderRadius:8,padding:2 }}>
+                {["select","name"].map(m=>(
+                  <button key={m} type="button" onClick={()=>setForm(p=>({...p,_projectMode:m,project:"",client_name_direct:""}))}
+                    style={{ padding:"4px 12px",borderRadius:6,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:form._projectMode===m?"#fff":"transparent",color:form._projectMode===m?"#0f172a":"#64748b",boxShadow:form._projectMode===m?"0 1px 4px rgba(0,0,0,.1)":"none" }}>
+                    {m==="select"?"Select Project":"Enter Name"}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {(!form._projectMode || form._projectMode==="select") ? (
+              <select value={form.project} onChange={e=>setForm(p=>({...p,project:e.target.value}))} style={inp}>
+                <option value="">— None (no project) —</option>
                 {projects.map(p=><option key={p.id} value={p.id}>{p.name}{p.client_name_snapshot?` — ${p.client_name_snapshot}`:""}</option>)}
               </select>
-            </div>
+            ) : (
+              <input value={form.client_name_direct||""} onChange={e=>setForm(p=>({...p,client_name_direct:e.target.value}))}
+                style={inp} placeholder="e.g. Rahul Sharma or ABC Technologies"/>
+            )}
+            <p style={{fontSize:11,color:"#94a3b8",margin:"5px 0 0"}}>
+              {(!form._projectMode||form._projectMode==="select") ? "Select from existing projects, or switch to 'Enter Name' to type directly" : "This name will appear on the quotation as the client"}
+            </p>
+          </div>
             <div>
               <label style={lbl}>Valid Until</label>
               <input type="date" {...F("valid_until")} style={inp}/>
