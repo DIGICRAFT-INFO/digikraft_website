@@ -8,6 +8,8 @@ const STATUS_COLOR = {
   probation: "#a16207",
 };
 
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+
 const AVATAR_COLORS = [
   "#7c3aed","#2563eb","#0d9488","#ea580c","#dc2626","#16a34a","#a16207","#0891b2","#9333ea","#c026d3",
 ];
@@ -76,7 +78,11 @@ export default function EmpTeamPage() {
                 return (
                   <div key={m.id} className="emp-team-card" onClick={()=>setSelected(m)} style={{ cursor:"pointer" }}>
                     {/* Avatar */}
-                    <div style={{ width:56,height:56,borderRadius:"50%",background:color,color:"#fff",fontSize:20,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px" }}>{m.initials}</div>
+                    {m.profile_image ? (
+                      <img src={`${BASE_URL}/${m.profile_image}`} alt={m.full_name} style={{ width:56,height:56,borderRadius:"50%",objectFit:"cover",border:`2px solid ${color}33`,margin:"0 auto 12px",display:"block" }} onError={e=>{e.target.style.display="none";}}/>
+                    ) : (
+                      <div style={{ width:56,height:56,borderRadius:"50%",background:color,color:"#fff",fontSize:20,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px" }}>{m.initials}</div>
+                    )}
                     <div style={{ fontWeight:700,fontSize:14,color:"#0f172a",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.full_name}</div>
                     <div style={{ fontSize:11,color:"#64748b",marginBottom:8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{m.designation}</div>
                     <span style={{ padding:"2px 9px",borderRadius:20,fontSize:10,fontWeight:700,background:m.status==="active"?"#dcfce7":"#fef9c3",color:STATUS_COLOR[m.status]||"#64748b",textTransform:"capitalize",display:"inline-block" }}>{m.status}</span>
@@ -92,7 +98,11 @@ export default function EmpTeamPage() {
       {selected && (
         <div style={{ position:"fixed",inset:0,background:"rgba(15,23,42,.45)",zIndex:1000,display:"flex",alignItems:"center",justifyContent:"center",padding:20 }} onClick={()=>setSelected(null)}>
           <div style={{ background:"#fff",borderRadius:20,padding:32,maxWidth:380,width:"100%",boxShadow:"0 20px 60px rgba(0,0,0,.15)",textAlign:"center" }} onClick={e=>e.stopPropagation()}>
-            <div style={{ width:72,height:72,borderRadius:"50%",background:getColor(selected.full_name),color:"#fff",fontSize:26,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>{selected.initials}</div>
+            {selected.profile_image ? (
+              <img src={`${BASE_URL}/${selected.profile_image}`} alt={selected.full_name} style={{ width:72,height:72,borderRadius:"50%",objectFit:"cover",border:`3px solid ${getColor(selected.full_name)}33`,margin:"0 auto 16px",display:"block" }} onError={e=>{e.target.style.display="none";}}/>
+            ) : (
+              <div style={{ width:72,height:72,borderRadius:"50%",background:getColor(selected.full_name),color:"#fff",fontSize:26,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 16px" }}>{selected.initials}</div>
+            )}
             <h2 style={{ fontSize:20,fontWeight:800,color:"#0f172a",margin:"0 0 4px" }}>{selected.full_name}</h2>
             <p style={{ fontSize:13,color:"#64748b",margin:"0 0 4px" }}>{selected.designation}</p>
             <p style={{ fontSize:12,color:"#94a3b8",margin:"0 0 16px" }}>{selected.department} · {selected.employee_id}</p>

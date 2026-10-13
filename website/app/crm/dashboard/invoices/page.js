@@ -91,9 +91,9 @@ export default function CrmInvoicesPage() {
           <h1 style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: "0 0 4px" }}>Invoices</h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>{items.length} total · {items.filter(i=>i.status==="overdue").length} overdue</p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", background: "#22c55e", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+        <Link href="/crm/dashboard/invoices/new" style={{ display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",textDecoration:"none" }}>
           <Plus size={16} /> New Invoice
-        </button>
+        </Link>
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
@@ -140,7 +140,9 @@ export default function CrmInvoicesPage() {
                         <Link href={`/crm/dashboard/invoices/${inv.id}`} target="_blank">
                           <button style={{ padding: "6px", background: "#dcfce7", color: "#16a34a", border: "none", borderRadius: "6px", cursor: "pointer" }} title="View / Print"><Eye size={13} /></button>
                         </Link>
-                        <button onClick={() => openEdit(inv)} style={{ padding: "6px", background: "#dbeafe", color: "#2563eb", border: "none", borderRadius: "6px", cursor: "pointer" }}><Edit2 size={13} /></button>
+                        <Link href={`/crm/dashboard/invoices/edit/${inv.id}`}>
+                          <button style={{ padding: "6px", background: "#dbeafe", color: "#2563eb", border: "none", borderRadius: "6px", cursor: "pointer" }}><Edit2 size={13} /></button>
+                        </Link>
                         <button onClick={() => handleDelete(inv.id, inv.invoice_number)} style={{ padding: "6px", background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", cursor: "pointer" }}><Trash2 size={13} /></button>
                       </div>
                     </td>

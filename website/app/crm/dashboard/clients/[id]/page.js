@@ -362,11 +362,17 @@ export default function ClientDetailPage() {
                 </button>
               ))}
             </div>
-            <button onClick={()=>openModal(activeTab==="projects"?"project":activeTab==="proposals"?"proposal":activeTab==="quotations"?"quotation":"invoice")}
-              style={{ display:"flex",alignItems:"center",gap:6,padding:"9px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer" }}>
+            <Link
+              href={
+                activeTab==="projects"   ? `/crm/dashboard/projects/new?client=${id}` :
+                activeTab==="proposals"  ? `/crm/dashboard/proposals/new?client=${id}` :
+                activeTab==="quotations" ? `/crm/dashboard/quotations/new?client=${id}` :
+                                          `/crm/dashboard/invoices/new?client=${id}`
+              }
+              style={{ display:"flex",alignItems:"center",gap:6,padding:"9px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:9,fontSize:13,fontWeight:700,cursor:"pointer",textDecoration:"none" }}>
               <Plus size={15}/>
               {activeTab==="projects"?"Add Project":activeTab==="proposals"?"New Proposal":activeTab==="quotations"?"New Quotation":"New Invoice"}
-            </button>
+            </Link>
           </div>
 
           {/* ── PROJECTS TAB ── */}
@@ -403,7 +409,8 @@ export default function ClientDetailPage() {
                         <td style={{ padding:"13px 16px" }}><Badge status={p.status}/></td>
                         <td style={{ padding:"13px 16px" }}>
                           <div style={{ display:"flex",gap:5 }}>
-                            <button onClick={()=>openModal("project",p)} style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button>
+                            <Link href={`/crm/dashboard/projects/${p.id}`}><button style={{ padding:6,background:"#dcfce7",color:"#16a34a",border:"none",borderRadius:6,cursor:"pointer" }} title="View"><Eye size={13}/></button></Link>
+                            <Link href={`/crm/dashboard/projects/new?client=${id}&edit=${p.id}`}><button style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button></Link>
                             <button onClick={()=>del("projects",p.id,p.name,loadProjects)} style={{ padding:6,background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,cursor:"pointer" }} title="Delete"><Trash2 size={13}/></button>
                           </div>
                         </td>
@@ -444,7 +451,7 @@ export default function ClientDetailPage() {
                         <td style={{ padding:"13px 16px" }}><Badge status={p.status}/></td>
                         <td style={{ padding:"13px 16px" }}>
                           <div style={{ display:"flex",gap:5,flexWrap:"wrap" }}>
-                            <button onClick={()=>openModal("proposal",p)} style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button>
+                            <Link href={`/crm/dashboard/proposals/edit/${p.id}`}><button style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button></Link>
                             {p.status==="draft" && <button onClick={()=>updateStatus("proposals",p.id,"sent",loadProposals)} style={{ padding:6,background:"#f0fdf4",color:"#16a34a",border:"none",borderRadius:6,cursor:"pointer" }} title="Mark Sent"><Send size={13}/></button>}
                             {p.status==="sent"  && <button onClick={()=>updateStatus("proposals",p.id,"accepted",loadProposals)} style={{ padding:6,background:"#dcfce7",color:"#15803d",border:"none",borderRadius:6,cursor:"pointer" }} title="Accept"><CheckCircle size={13}/></button>}
                             {p.status==="sent"  && <button onClick={()=>updateStatus("proposals",p.id,"rejected",loadProposals)} style={{ padding:6,background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,cursor:"pointer" }} title="Reject"><X size={13}/></button>}
@@ -491,7 +498,7 @@ export default function ClientDetailPage() {
                         <td style={{ padding:"13px 16px" }}><Badge status={q.status}/></td>
                         <td style={{ padding:"13px 16px" }}>
                           <div style={{ display:"flex",gap:5,flexWrap:"wrap" }}>
-                            <button onClick={async()=>{try{const{data}=await CRM_API.get(`/quotations/${q.id}`);openModal("quotation",data);}catch(e){alert("Load failed");}}} style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button>
+                            <Link href={`/crm/dashboard/quotations/edit/${q.id}`}><button style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button></Link>
                             {["draft","sent"].includes(q.status) && <button onClick={()=>updateStatus("quotations",q.id,"approved",loadQuotations)} style={{ padding:6,background:"#dcfce7",color:"#15803d",border:"none",borderRadius:6,cursor:"pointer" }} title="Approve"><CheckCircle size={13}/></button>}
                             {q.status==="draft" && <button onClick={()=>updateStatus("quotations",q.id,"sent",loadQuotations)} style={{ padding:6,background:"#f0fdf4",color:"#16a34a",border:"none",borderRadius:6,cursor:"pointer" }} title="Mark Sent"><Send size={13}/></button>}
                             <Link href={`/crm/dashboard/quotations/${q.id}`} target="_blank">
@@ -555,7 +562,7 @@ export default function ClientDetailPage() {
                           <td style={{ padding:"13px 16px" }}><Badge status={inv.status}/></td>
                           <td style={{ padding:"13px 16px" }}>
                             <div style={{ display:"flex",gap:5,flexWrap:"wrap" }}>
-                              <button onClick={async()=>{try{const{data}=await CRM_API.get(`/invoices/${inv.id}`);openModal("invoice",data);}catch(e){alert("Load failed");}}} style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button>
+                              <Link href={`/crm/dashboard/invoices/edit/${inv.id}`}><button style={{ padding:6,background:"#dbeafe",color:"#2563eb",border:"none",borderRadius:6,cursor:"pointer" }} title="Edit"><Edit2 size={13}/></button></Link>
                               {inv.status==="draft"   && <button onClick={()=>updateStatus("invoices",inv.id,"issued",loadInvoices)} style={{ padding:6,background:"#dbeafe",color:"#1d4ed8",border:"none",borderRadius:6,cursor:"pointer" }} title="Mark Issued"><Send size={13}/></button>}
                               {["issued","partial","overdue"].includes(inv.status) && <button onClick={()=>updateStatus("invoices",inv.id,"paid",loadInvoices)} style={{ padding:6,background:"#dcfce7",color:"#15803d",border:"none",borderRadius:6,cursor:"pointer" }} title="Mark Paid"><CheckCircle size={13}/></button>}
                               <Link href={`/crm/dashboard/invoices/${inv.id}`} target="_blank">

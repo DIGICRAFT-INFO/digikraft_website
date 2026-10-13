@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2, X, Briefcase, Search } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Briefcase, Search, Eye } from "lucide-react";
+import Link from "next/link";
 import CRM_API from "@/utils/crmApi";
 
 const EMPTY = { client: "", name: "", services: [], project_type: "retainer", budget_range: "", start_date: "", expected_end_date: "", status: "active", notes: "" };
@@ -78,9 +79,9 @@ export default function CrmProjectsPage() {
           <h1 style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: "0 0 4px" }}>Projects</h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>{filtered.length} project{filtered.length !== 1 ? "s" : ""}</p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", background: "#22c55e", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+        <Link href="/crm/dashboard/projects/new" style={{ display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",textDecoration:"none" }}>
           <Plus size={16} /> New Project
-        </button>
+        </Link>
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
@@ -143,6 +144,7 @@ export default function CrmProjectsPage() {
                     </td>
                     <td style={{ padding: "13px 16px" }}>
                       <div style={{ display: "flex", gap: "6px" }}>
+                        <Link href={`/crm/dashboard/projects/${p.id}`}><button style={{ padding: "6px", background: "#dcfce7", color: "#16a34a", border: "none", borderRadius: "6px", cursor: "pointer" }} title="View"><Eye size={13} /></button></Link>
                         <button onClick={() => openEdit(p)} style={{ padding: "6px", background: "#dbeafe", color: "#2563eb", border: "none", borderRadius: "6px", cursor: "pointer" }}><Edit2 size={13} /></button>
                         <button onClick={() => handleDelete(p.id, p.name)} style={{ padding: "6px", background: "#fee2e2", color: "#dc2626", border: "none", borderRadius: "6px", cursor: "pointer" }}><Trash2 size={13} /></button>
                       </div>

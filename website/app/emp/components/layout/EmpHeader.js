@@ -15,6 +15,15 @@ export default function EmpHeader({ onMenuToggle }) {
   useEffect(() => {
     try { const u = JSON.parse(localStorage.getItem("emp_user")||"{}"); if (u.full_name) setEmp(u); } catch {}
     fetchUnread();
+    // Refresh from API for latest profile_image
+    const token = localStorage.getItem("emp_token");
+    if (token) {
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
+      fetch(`${base}/api/emp/auth/me`, { headers:{ Authorization:`Bearer ${token}` } })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data?.full_name) { setEmp(data); localStorage.setItem("emp_user", JSON.stringify(data)); } })
+        .catch(()=>{});
+    }
     const iv = setInterval(fetchUnread, 30000);
     return () => clearInterval(iv);
   }, []);
@@ -30,6 +39,7 @@ export default function EmpHeader({ onMenuToggle }) {
 
   const logout = () => { localStorage.removeItem("emp_token"); localStorage.removeItem("emp_user"); router.replace("/emp/login"); };
   const initials = emp.full_name?.split(" ").map(w=>w[0]).slice(0,2).join("").toUpperCase()||"E";
+  const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000";
 
   return (
     <header style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"0 24px", height:"62px", background:"#fff", borderBottom:"1px solid #e2e8f0", flexShrink:0, fontFamily:"'Inter',sans-serif" }}>
@@ -44,7 +54,11 @@ export default function EmpHeader({ onMenuToggle }) {
         </Link>
         <div ref={dropRef} style={{ position:"relative" }}>
           <button onClick={()=>setDropOpen(!dropOpen)} style={{ display:"flex", alignItems:"center", gap:"8px", padding:"5px 10px", borderRadius:"8px", border:"1px solid #e2e8f0", background:"#f8fafc", cursor:"pointer" }}>
-            <div style={{ width:"30px", height:"30px", borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#1d4ed8)", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:"700", fontSize:"12px" }}>{initials}</div>
+            {emp.profile_image ? (
+              <img src={`${BASE}/${emp.profile_image}`} alt={emp.full_name} style={{ width:30,height:30,borderRadius:"50%",objectFit:"cover",border:"2px solid #dbeafe",flexShrink:0 }} onError={e=>{e.target.style.display="none";}}/>
+            ) : (
+              <div style={{ width:"30px", height:"30px", borderRadius:"50%", background:"linear-gradient(135deg,#2563eb,#1d4ed8)", color:"#fff", display:"flex", alignItems:"center", justifyContent:"center", fontWeight:"700", fontSize:"12px" }}>{initials}</div>
+            )}
             <div style={{ textAlign:"left" }}>
               <div style={{ fontSize:"13px", fontWeight:"600", color:"#1e293b", maxWidth:"100px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{emp.full_name}</div>
               <div style={{ fontSize:"10px", color:"#64748b" }}>{emp.employee_id}</div>

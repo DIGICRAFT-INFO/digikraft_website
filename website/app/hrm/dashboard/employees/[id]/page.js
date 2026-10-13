@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, Edit2, Save, X, KeyRound, UserX, UserCheck,
   Mail, Phone, MapPin, Calendar, DollarSign, Briefcase,
-  RefreshCw, AlertCircle, Building2, CreditCard, Shield
+  RefreshCw, AlertCircle, Building2, CreditCard, Shield, Camera, Trash2
 } from "lucide-react";
 import HRM_API from "@/utils/hrmApi";
 
@@ -54,6 +54,10 @@ export default function HrmEmployeeDetailPage() {
   const [deactivateModal,setDeactivateModal]= useState(false);
   const [deactReason,    setDeactReason]    = useState("resigned");
   const [pwResult,       setPwResult]       = useState("");
+
+  /* photo upload */
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoMsg,       setPhotoMsg]       = useState("");
 
   useEffect(() => {
     try { const u = JSON.parse(localStorage.getItem("hrm_user")||"{}"); setHrmUser(u); } catch {}
@@ -167,6 +171,43 @@ export default function HrmEmployeeDetailPage() {
     } catch (err) { alert(err.response?.data?.message||"Failed"); }
   };
 
+  /* Photo handlers */
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true); setPhotoMsg("");
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      const { data } = await HRM_API.post(`/employees/${id}/photo`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setEmp(prev => ({ ...prev, profile_image: data.profile_image }));
+      setPhotoMsg("✅ Photo updated!");
+    } catch (ex) {
+      setPhotoMsg("❌ " + (ex.response?.data?.message || "Upload failed"));
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = "";
+      setTimeout(() => setPhotoMsg(""), 3000);
+    }
+  };
+
+  const handleDeletePhoto = async () => {
+    if (!confirm("Remove this employee's profile photo?")) return;
+    setPhotoUploading(true); setPhotoMsg("");
+    try {
+      await HRM_API.delete(`/employees/${id}/photo`);
+      setEmp(prev => ({ ...prev, profile_image: null }));
+      setPhotoMsg("✅ Photo removed");
+    } catch (ex) {
+      setPhotoMsg("❌ " + (ex.response?.data?.message || "Remove failed"));
+    } finally {
+      setPhotoUploading(false);
+      setTimeout(() => setPhotoMsg(""), 3000);
+    }
+  };
+
   const F   = (k)  => ({ value:form[k]||"", onChange:(e)=>setForm(p=>({...p,[k]:e.target.value})) });
   const Fn  = (k)  => ({ ...F(k), type:"number", value:form[k]||0, onChange:(e)=>setForm(p=>({...p,[k]:Number(e.target.value)})) });
   const inp = { width:"100%",padding:"9px 12px",border:"1.5px solid #e2e8f0",borderRadius:8,fontSize:13,outline:"none",fontFamily:"inherit" };
@@ -222,7 +263,31 @@ export default function HrmEmployeeDetailPage() {
       {/* Profile Card */}
       <div className="hrm-card" style={{ padding:24,marginBottom:20 }}>
         <div style={{ display:"flex",alignItems:"center",gap:20,flexWrap:"wrap" }}>
-          <div style={{ width:68,height:68,borderRadius:"50%",background:"linear-gradient(135deg,#7c3aed,#5b21b6)",color:"#fff",fontSize:26,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>{initials}</div>
+
+          {/* ── Avatar with upload overlay ── */}
+          <div style={{ position:"relative",flexShrink:0 }}>
+            {emp.profile_image ? (
+              <img
+                src={`${process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:5000"}/${emp.profile_image}`}
+                alt={emp.full_name}
+                style={{ width:72,height:72,borderRadius:"50%",objectFit:"cover",border:"3px solid #ede9fe" }}
+              />
+            ) : (
+              <div style={{ width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#7c3aed,#5b21b6)",color:"#fff",fontSize:26,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center" }}>
+                {initials}
+              </div>
+            )}
+            {/* Camera overlay — HR can upload */}
+            <label
+              htmlFor="hrm-photo-upload"
+              title="Upload photo"
+              style={{ position:"absolute",bottom:0,right:0,width:24,height:24,borderRadius:"50%",background:"#7c3aed",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",border:"2px solid #fff",opacity:photoUploading?0.5:1 }}>
+              <Camera size={12}/>
+            </label>
+            <input id="hrm-photo-upload" type="file" accept="image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} style={{ display:"none" }}/>
+          </div>
+
+          {/* Name + meta */}
           <div style={{ flex:1,minWidth:0 }}>
             {editMode ? (
               <input {...F("full_name")} style={{ ...inp,fontSize:20,fontWeight:700,marginBottom:8 }} placeholder="Full Name"/>
@@ -242,7 +307,18 @@ export default function HrmEmployeeDetailPage() {
               {emp.phone && <span><Phone size={11} style={{ verticalAlign:"middle",marginRight:3 }}/>{emp.phone}</span>}
               <span><Calendar size={11} style={{ verticalAlign:"middle",marginRight:3 }}/>Joined {fmtD(emp.date_of_joining)}</span>
             </div>
+            {/* Photo msg + remove button */}
+            <div style={{ display:"flex",gap:8,alignItems:"center",marginTop:6,flexWrap:"wrap" }}>
+              {photoMsg && <span style={{ fontSize:12,fontWeight:600,color:photoMsg.startsWith("✅")?"#15803d":"#dc2626" }}>{photoMsg}</span>}
+              {emp.profile_image && !photoUploading && (
+                <button onClick={handleDeletePhoto} style={{ display:"flex",alignItems:"center",gap:4,padding:"3px 10px",background:"#fee2e2",color:"#dc2626",border:"none",borderRadius:6,fontSize:11,fontWeight:600,cursor:"pointer" }}>
+                  <Trash2 size={11}/> Remove Photo
+                </button>
+              )}
+              {photoUploading && <span style={{ fontSize:11,color:"#94a3b8" }}>Uploading…</span>}
+            </div>
           </div>
+
           <div style={{ display:"flex",flexDirection:"column",alignItems:"flex-end",gap:8 }}>
             {editMode ? (
               <select {...F("status")} style={{ ...inp,width:"auto",minWidth:130 }}>

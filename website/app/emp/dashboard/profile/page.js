@@ -46,11 +46,20 @@ export default function EmpProfilePage() {
 
       {/* Avatar Card */}
       <div style={{ background:"#fff",border:"1px solid #e2e8f0",borderRadius:14,padding:24,marginBottom:24,display:"flex",alignItems:"center",gap:20,flexWrap:"wrap" }}>
-        <div style={{ width:64,height:64,borderRadius:"50%",background:"linear-gradient(135deg,#2563eb,#1d4ed8)",color:"#fff",fontSize:24,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>{initials}</div>
+        {emp.profile_image ? (
+          <img
+            src={`${process.env.NEXT_PUBLIC_BACKEND_URL||"http://localhost:5000"}/${emp.profile_image}`}
+            alt={emp.full_name}
+            style={{ width:72,height:72,borderRadius:"50%",objectFit:"cover",border:"3px solid #dbeafe",flexShrink:0 }}
+          />
+        ) : (
+          <div style={{ width:72,height:72,borderRadius:"50%",background:"linear-gradient(135deg,#2563eb,#1d4ed8)",color:"#fff",fontSize:26,fontWeight:800,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>{initials}</div>
+        )}
         <div>
           <h2 style={{ fontSize:20,fontWeight:800,color:"#0f172a",margin:"0 0 4px" }}>{emp.full_name}</h2>
           <div style={{ fontSize:13,color:"#64748b" }}>{emp.employee_id} · {emp.designation?.title||"—"} · {emp.department?.name||"—"}</div>
           <div style={{ fontSize:12,color:"#94a3b8",marginTop:2 }}>Joined: {emp.date_of_joining?new Date(emp.date_of_joining).toLocaleDateString("en-IN"):"—"} · Status: <span style={{ color:"#16a34a",fontWeight:600,textTransform:"capitalize" }}>{emp.status}</span></div>
+          {emp.profile_image && <div style={{ fontSize:11,color:"#64748b",marginTop:4 }}>📷 Profile photo set by HR</div>}
         </div>
       </div>
 

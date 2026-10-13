@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Receipt,
-  CreditCard, Image, DollarSign, ShieldAlert, MessageSquare,
+  CreditCard, DollarSign, ShieldAlert, MessageSquare,
   Clock, Bell, Wrench, X,
 } from "lucide-react";
 
@@ -16,13 +16,12 @@ const navItems = [
   { id: "proposals",     label: "Proposals",      href: "/crm/dashboard/proposals",      icon: FileText,        roles: ["owner","manager","executive"] },
   { id: "quotations",    label: "Quotations",     href: "/crm/dashboard/quotations",     icon: Receipt,         roles: ["owner","manager"] },
   { id: "invoices",      label: "Invoices",       href: "/crm/dashboard/invoices",       icon: FileText,        roles: ["owner","manager","accountant"] },
-  { id: "portfolio",     label: "Portfolio",      href: "/crm/dashboard/portfolio",      icon: Image,           roles: ["owner","manager"] },
   { id: "payments",      label: "Payments",       href: "/crm/dashboard/payments",       icon: CreditCard,      roles: ["owner","manager","accountant"] },
   { id: "pending-users", label: "Pending Users",  href: "/crm/dashboard/pending-users",  icon: ShieldAlert,     roles: ["owner","manager"] },
   { id: "enquiries",     label: "Enquiries",      href: "/crm/dashboard/enquiries",      icon: MessageSquare,   roles: ["owner","manager","executive"] },
   { id: "history",       label: "History",        href: "/crm/dashboard/history",        icon: Clock,           roles: ["owner","manager"] },
   { id: "notifications", label: "Notifications",  href: "/crm/dashboard/notifications",  icon: Bell,            roles: ["owner","manager","accountant","executive"] },
-  { id: "settings",      label: "Settings",        href: "/crm/dashboard/settings",        icon: Wrench,          roles: ["owner","manager"] },
+  { id: "settings",      label: "Settings",       href: "/crm/dashboard/settings",       icon: Wrench,          roles: ["owner","manager"] },
 ];
 
 export default function CrmSidebar({ mobileOpen, onClose }) {

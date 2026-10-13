@@ -1,12 +1,13 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Plus, Edit2, Trash2, X, MessageSquare, Search } from "lucide-react";
 import CRM_API from "@/utils/crmApi";
 
-const EMPTY = { client_name: "", mobile_number: "", email: "", address: "", service_interest: "", budget_range: "", notes: "", status: "new", source: "manual" };
+const EMPTY = { client_name: "", mobile_number: "", email: "", address: "", service_interest: "", service_interest_other: "", budget_range: "", notes: "", status: "new", source: "manual" };
 const STATUS_MAP = { new:["#dbeafe","#1d4ed8"], contacted:["#fef9c3","#a16207"], proposal_sent:["#ede9fe","#6d28d9"], converted:["#dcfce7","#15803d"], lost:["#fee2e2","#dc2626"] };
-const SOURCES = ["manual","website","instagram","facebook","linkedin","referral","other"];
-const SERVICES = ["seo","smm","ppc","content","web_design","branding","email_marketing","video","full_package","other"];
+const SOURCES = ["manual","website","instagram","facebook","linkedin","referral","whatsapp","other"];
+const SERVICES = ["SEO","Social Media Marketing","PPC / Paid Ads","Content Marketing","Web Design","Branding","Email Marketing","Video Production","Full Package","Other"];
 
 export default function CrmEnquiriesPage() {
   const [items, setItems] = useState([]);
@@ -39,8 +40,13 @@ export default function CrmEnquiriesPage() {
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setError("");
     try {
-      if (editing) await CRM_API.patch(`/enquiries/${editing.id}`, form);
-      else await CRM_API.post("/enquiries", form);
+      const payload = { ...form };
+      if (form.service_interest === "Other" && form.service_interest_other?.trim()) {
+        payload.service_interest = `Other: ${form.service_interest_other.trim()}`;
+      }
+      delete payload.service_interest_other;
+      if (editing) await CRM_API.patch(`/enquiries/${editing.id}`, payload);
+      else await CRM_API.post("/enquiries", payload);
       closeModal(); load();
     } catch (err) { setError(err.response?.data?.message || "Save failed"); }
     finally { setSaving(false); }
@@ -62,9 +68,9 @@ export default function CrmEnquiriesPage() {
           <h1 style={{ fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: "0 0 4px" }}>Enquiries</h1>
           <p style={{ fontSize: "13px", color: "#64748b", margin: 0 }}>{items.length} total · {items.filter(i => i.status === "new").length} new</p>
         </div>
-        <button onClick={openCreate} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", background: "#22c55e", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+        <Link href="/crm/dashboard/enquiries/new" style={{ display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",textDecoration:"none" }}>
           <Plus size={16} /> Log Enquiry
-        </button>
+        </Link>
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
@@ -146,10 +152,15 @@ export default function CrmEnquiriesPage() {
                 ))}
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Service Interest</label>
-                  <select {...F("service_interest")} style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", outline: "none", fontFamily: "inherit" }}>
+                  <select value={form.service_interest} onChange={e => setForm(p => ({ ...p, service_interest: e.target.value, service_interest_other: "" }))} style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", outline: "none", fontFamily: "inherit" }}>
                     <option value="">Select…</option>
-                    {SERVICES.map(s => <option key={s} value={s}>{s.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</option>)}
+                    {SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  {form.service_interest === "Other" && (
+                    <input value={form.service_interest_other || ""} onChange={e => setForm(p => ({ ...p, service_interest_other: e.target.value }))}
+                      placeholder="Please specify…" required
+                      style={{ width: "100%", marginTop: "8px", padding: "9px 12px", border: "1.5px solid #8b5cf6", borderRadius: "8px", fontSize: "13px", outline: "none", fontFamily: "inherit" }}/>
+                  )}
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Source</label>

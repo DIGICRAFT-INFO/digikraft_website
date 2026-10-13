@@ -97,3 +97,48 @@ exports.updateProfile = async (req, res) => {
     res.json(obj);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
+
+// ── Upload Profile Photo ──────────────────────────────────────────────────────
+exports.uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const fs   = require('fs');
+    const path = require('path');
+
+    // Delete old profile image if exists
+    const existing = await HrmEmployee.findById(req.empUser._id).select('profile_image').lean();
+    if (existing?.profile_image) {
+      const oldPath = path.join(__dirname, '..', '..', existing.profile_image);
+      if (fs.existsSync(oldPath)) fs.unlink(oldPath, () => {});
+    }
+
+    const imagePath = `uploads/avatars/${req.file.filename}`;
+    const emp = await HrmEmployee.findByIdAndUpdate(
+      req.empUser._id,
+      { profile_image: imagePath },
+      { new: true }
+    ).populate('department', 'name').populate('designation', 'title');
+
+    const obj = emp.toJSON();
+    delete obj.aadhaar_number; delete obj.account_number; delete obj.pan_number;
+    res.json({ message: 'Profile photo updated', profile_image: imagePath, employee: obj });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ── Delete Profile Photo ──────────────────────────────────────────────────────
+exports.deleteProfileImage = async (req, res) => {
+  try {
+    const fs   = require('fs');
+    const path = require('path');
+
+    const existing = await HrmEmployee.findById(req.empUser._id).select('profile_image').lean();
+    if (existing?.profile_image) {
+      const filePath = path.join(__dirname, '..', '..', existing.profile_image);
+      if (fs.existsSync(filePath)) fs.unlink(filePath, () => {});
+    }
+
+    await HrmEmployee.findByIdAndUpdate(req.empUser._id, { profile_image: null });
+    res.json({ message: 'Profile photo removed' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};

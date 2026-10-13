@@ -39,6 +39,7 @@ exports.team = async (req, res) => {
         designation:    m.designation?.title || '—',
         date_of_joining: m.date_of_joining,
         status:         m.status,
+        profile_image:  m.profile_image || null,
         initials:       m.full_name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase(),
       });
     });

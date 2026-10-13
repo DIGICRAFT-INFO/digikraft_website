@@ -164,3 +164,52 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: 'Password reset', temp_password: newPass });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
+
+// ── Upload employee profile photo (HR uploads on behalf of employee) ──────────
+exports.uploadPhoto = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const fs   = require('fs');
+    const path = require('path');
+    const { id } = req.params;
+
+    // Delete old photo if exists
+    const existing = await HrmEmployee.findById(id).select('profile_image').lean();
+    if (existing?.profile_image) {
+      const oldPath = path.join(__dirname, '..', '..', existing.profile_image);
+      if (fs.existsSync(oldPath)) fs.unlink(oldPath, () => {});
+    }
+
+    const imagePath = `uploads/avatars/${req.file.filename}`;
+    const emp = await HrmEmployee.findByIdAndUpdate(
+      id, { profile_image: imagePath }, { new: true }
+    ).populate('department', 'name').populate('designation', 'title');
+
+    if (!emp) return res.status(404).json({ message: 'Employee not found' });
+
+    await log(req, 'updated', id, emp.full_name, 'Profile photo uploaded by HR');
+    res.json({ message: 'Photo uploaded', profile_image: imagePath, employee: emp.toJSON() });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ── Delete employee profile photo ─────────────────────────────────────────────
+exports.deletePhoto = async (req, res) => {
+  try {
+    const fs   = require('fs');
+    const path = require('path');
+    const { id } = req.params;
+
+    const existing = await HrmEmployee.findById(id).select('profile_image full_name').lean();
+    if (!existing) return res.status(404).json({ message: 'Employee not found' });
+
+    if (existing.profile_image) {
+      const filePath = path.join(__dirname, '..', '..', existing.profile_image);
+      if (fs.existsSync(filePath)) fs.unlink(filePath, () => {});
+    }
+
+    await HrmEmployee.findByIdAndUpdate(id, { profile_image: null });
+    await log(req, 'updated', id, existing.full_name, 'Profile photo removed by HR');
+    res.json({ message: 'Photo removed' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};

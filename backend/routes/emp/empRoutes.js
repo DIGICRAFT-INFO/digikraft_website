@@ -14,6 +14,8 @@ const loginLimiter = rateLimit({
   message:{ message:'Too many login attempts. Try after 15 minutes.' },
 });
 
+const upload    = require('../../middleware/empUpload');
+
 // ── Public ─────────────────────────────────────────────────────────────────────
 router.post('/auth/login',  loginLimiter, authCtrl.login);
 
