@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Save, Plus, X } from "lucide-react";
+import { ArrowLeft, Save, Plus, X, Zap } from "lucide-react";
 import CRM_API from "@/utils/crmApi";
 
 const EMPTY_ITEM = { description:"", quantity:1, unit_price:0, total_price:0 };
@@ -13,6 +13,7 @@ export default function EditInvoicePage() {
   const { id }  = useParams();
   const router  = useRouter();
   const [projects, setProjects] = useState([]);
+  const [services, setServices] = useState([]);
   const [items,    setItems]    = useState([{ ...EMPTY_ITEM }]);
   const [form,     setForm]     = useState(null);
   const [saving,   setSaving]   = useState(false);
@@ -21,11 +22,13 @@ export default function EditInvoicePage() {
 
   const load = useCallback(async () => {
     try {
-      const [{ data:inv }, { data:proj }] = await Promise.all([
+      const [{ data:inv }, { data:proj }, { data:svcs }] = await Promise.all([
         CRM_API.get(`/invoices/${id}`),
         CRM_API.get("/projects"),
+        CRM_API.get("/services"),
       ]);
       setProjects(proj);
+      setServices(svcs.filter(s=>s.status==="active"));
       setForm({
         project:       inv.project?.id||inv.project||"",
         invoice_type:  inv.invoice_type||"full",
@@ -52,6 +55,18 @@ export default function EditInvoicePage() {
     u.total_price = (Number(u.quantity)||0) * (Number(u.unit_price)||0);
     return u;
   }));
+
+  // ✅ Add service as line item
+  const addServiceAsItem = (svc) => {
+    const newItem = {
+      description: svc.name + (svc.description ? ` — ${svc.description}` : ""),
+      quantity: 1, unit_price: svc.base_price||0, total_price: svc.base_price||0,
+    };
+    setItems(prev => {
+      const hasEmpty = prev.length===1 && !prev[0].description && !prev[0].unit_price;
+      return hasEmpty ? [newItem] : [...prev, newItem];
+    });
+  };
 
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setErr(""); setSaveOk("");
@@ -111,6 +126,28 @@ export default function EditInvoicePage() {
             <div><label style={lbl}>HSN/SAC</label><input {...F("hsn_sac")} style={inp}/></div>
             <div><label style={lbl}>Place of Supply</label><input {...F("place_of_supply")} style={inp}/></div>
           </div>
+          {/* ✅ Services Quick-Add */}
+          {services.length > 0 && (
+            <div style={{ background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"14px 16px" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:6,marginBottom:10 }}>
+                <Zap size={14} color="#16a34a"/>
+                <span style={{ fontSize:12,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:".05em" }}>Quick Add from Services</span>
+                <span style={{ fontSize:11,color:"#16a34a" }}>— Click to add as line item</span>
+              </div>
+              <div style={{ display:"flex",gap:8,flexWrap:"wrap" }}>
+                {services.map(svc => (
+                  <button key={svc.id} type="button" onClick={() => addServiceAsItem(svc)}
+                    style={{ display:"flex",alignItems:"center",gap:6,padding:"6px 14px",borderRadius:20,border:"1.5px solid #22c55e",background:"#fff",color:"#15803d",fontSize:12,fontWeight:600,cursor:"pointer" }}
+                    onMouseEnter={e=>{e.currentTarget.style.background="#22c55e";e.currentTarget.style.color="#fff";}}
+                    onMouseLeave={e=>{e.currentTarget.style.background="#fff";e.currentTarget.style.color="#15803d";}}>
+                    <Plus size={12}/>
+                    {svc.name}
+                    {svc.base_price > 0 && <span style={{ fontSize:11,opacity:.8 }}> · {fmt(svc.base_price)}{svc.price_unit==="monthly"?"/mo":svc.price_unit==="per_hour"?"/hr":svc.price_unit==="one_time"?" OT":""}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Line Items */}
           <div>
             <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10 }}>
