@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-  // Cookies se token read karna
-  const token = request.cookies.get('token')?.value;
+  const { pathname } = request.nextUrl;
 
-  // Agar token nahi hai, toh login page par bhej do
+  // Allow login, register and public pages — do NOT redirect these
+  const publicPaths = ['/admin/login', '/admin/register', '/login'];
+  if (publicPaths.some(p => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
+  // For all other /admin/* routes, check token
+  const token = request.cookies.get('token')?.value;
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return NextResponse.redirect(new URL('/admin/login', request.url));
   }
 
   return NextResponse.next();
@@ -14,7 +20,7 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*', 
-    '/admin/:path*'
+    '/dashboard/:path*',
+    '/admin/:path*',
   ],
 };
