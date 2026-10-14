@@ -4,7 +4,7 @@ import { Plus, Edit2, Trash2, X, Briefcase, Search, Eye } from "lucide-react";
 import Link from "next/link";
 import CRM_API from "@/utils/crmApi";
 
-const EMPTY = { client: "", name: "", services: [], project_type: "retainer", budget_range: "", start_date: "", expected_end_date: "", status: "active", notes: "" };
+const EMPTY = { client: "", name: "", services: [], project_type: "retainer", budget_range: "", start_date: "", expected_end_date: "", status: "active", notes: "", project_type_other: "" };
 const STATUS_MAP = { active:["#dcfce7","#15803d"], on_hold:["#fef9c3","#a16207"], completed:["#dbeafe","#1d4ed8"], cancelled:["#fee2e2","#dc2626"] };
 const TYPE_MAP = { retainer:"Retainer", one_time:"One Time", campaign:"Campaign", audit:"Audit", consultation:"Consultation", other:"Other" };
 
@@ -52,8 +52,12 @@ export default function CrmProjectsPage() {
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setError("");
     try {
-      if (editing) await CRM_API.patch(`/projects/${editing.id}`, form);
-      else await CRM_API.post("/projects", form);
+      const { project_type_other, ...payload } = form;
+      if (payload.project_type === "other" && project_type_other?.trim()) {
+        payload.project_type = project_type_other.trim();
+      }
+      if (editing) await CRM_API.patch(`/projects/${editing.id}`, payload);
+      else await CRM_API.post("/projects", payload);
       closeModal(); load();
     } catch (err) { setError(err.response?.data?.message || "Save failed"); }
     finally { setSaving(false); }
@@ -183,6 +187,15 @@ export default function CrmProjectsPage() {
                   <select {...F("project_type")} style={{ width: "100%", padding: "9px 12px", border: "1.5px solid #e2e8f0", borderRadius: "8px", fontSize: "13px", outline: "none", fontFamily: "inherit" }}>
                     {Object.entries(TYPE_MAP).map(([v,l]) => <option key={v} value={v}>{l}</option>)}
                   </select>
+                  {form.project_type === "other" && (
+                    <input
+                      value={form.project_type_other||""}
+                      onChange={e => setForm(p=>({...p,project_type_other:e.target.value}))}
+                      placeholder="Please specify…"
+                      required
+                      style={{ width:"100%",marginTop:8,padding:"9px 12px",border:"1.5px solid #8b5cf6",borderRadius:"8px",fontSize:"13px",outline:"none",fontFamily:"inherit" }}
+                    />
+                  )}
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "5px" }}>Status</label>

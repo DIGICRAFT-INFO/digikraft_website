@@ -18,6 +18,7 @@ export default function NewProjectPage() {
     client: clientId, name: "", project_type: "retainer",
     budget_range: "", start_date: "", expected_end_date: "",
     status: "active", notes: "", services: [],
+    project_type_other: "",
   });
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState("");
@@ -35,7 +36,12 @@ export default function NewProjectPage() {
   const handleSave = async (e) => {
     e.preventDefault(); setSaving(true); setErr("");
     try {
-      const { data } = await CRM_API.post("/projects", form);
+      // If "other" selected, use the custom text as project_type
+      const { project_type_other, ...payload } = form;
+      if (payload.project_type === "other" && project_type_other?.trim()) {
+        payload.project_type = project_type_other.trim();
+      }
+      const { data } = await CRM_API.post("/projects", payload);
       // Go to project detail or back to client
       if (clientId) router.push(`/crm/dashboard/clients/${clientId}`);
       else router.push(`/crm/dashboard/projects/${data.id||data._id}`);
@@ -86,6 +92,17 @@ export default function NewProjectPage() {
               <select {...F("project_type")} style={inp}>
                 {Object.entries(TYPE_MAP).map(([v,l])=><option key={v} value={v}>{l}</option>)}
               </select>
+              {/* ✅ "Other" reveals a text input */}
+              {form.project_type === "other" && (
+                <input
+                  value={form.project_type_other||""}
+                  onChange={e=>setForm(p=>({...p,project_type_other:e.target.value}))}
+                  style={{...inp,marginTop:8,borderColor:"#8b5cf6"}}
+                  placeholder="Please specify project type…"
+                  required
+                  autoFocus
+                />
+              )}
             </div>
             <div>
               <label style={lbl}>Status</label>
