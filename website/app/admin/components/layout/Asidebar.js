@@ -31,6 +31,31 @@ const Asidebar = () => {
     setIsMounted(true);
     const role = localStorage.getItem("role") || "user";
     setUserRole(role);
+
+    // ✅ Re-read role when ProtectedRoute updates it (after verify API returns)
+    const handleStorageChange = () => {
+      const updatedRole = localStorage.getItem("role") || "user";
+      setUserRole(updatedRole);
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // ✅ Also poll every 500ms for 3 seconds after mount
+    // This handles the case where ProtectedRoute updates localStorage
+    // in the same tab (storage event doesn't fire for same-tab changes)
+    let attempts = 0;
+    const poll = setInterval(() => {
+      const r = localStorage.getItem("role") || "user";
+      if (r !== "user" || attempts > 6) {
+        setUserRole(r);
+        clearInterval(poll);
+      }
+      attempts++;
+    }, 500);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(poll);
+    };
   }, []);
 
   // Allow quick role switching from the sidebar for debugging/local use
