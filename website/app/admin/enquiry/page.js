@@ -9,13 +9,16 @@ export default function EnquiryCMS() {
   const [selectedEnquiry, setSelectedEnquiry] = useState(null);
   const [unreadIds, setUnreadIds] = useState([]);
 
-  const API_URL = "https://backend.digikraftsocial.com/api/enquiry";
+  const API_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/enquiry";
 
   const fetchEnquiries = async () => {
     setLoading(true);
     setError(null);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const response = await fetch(`${API_URL}/send`);
+      const response = await fetch(`${API_URL}/send`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!response.ok) throw new Error("Failed to fetch data from backend");
       const data = await response.json();
       
@@ -29,7 +32,13 @@ export default function EnquiryCMS() {
 
       setUnreadIds(unread);
     } catch (err) {
-      setError(err.message);
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setError("Request timed out. Please try refreshing.");
+      } else {
+        setError(err.message);
+      }
+      setEnquiries([]);
     } finally {
       setLoading(false);
     }

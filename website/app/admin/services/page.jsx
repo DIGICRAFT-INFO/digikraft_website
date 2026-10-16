@@ -16,8 +16,11 @@ export default function ServicesAdmin() {
 
   useEffect(() => {
     const fetchServices = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       try {
-        const res = await fetch("https://backend.digikraftsocial.com/api/services-section");
+        const res = await fetch((process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/services-section", { signal: controller.signal });
+        clearTimeout(timeoutId);
         const json = await res.json();
         if (json.success && json.data) {
           const data = Array.isArray(json.data) ? json.data[0] : json.data;
@@ -31,7 +34,12 @@ export default function ServicesAdmin() {
           }
         }
       } catch (error) {
-        console.error("Error fetching database schema values:", error);
+        clearTimeout(timeoutId);
+        if (error.name === "AbortError") {
+          console.warn("Fetch aborted (timeout): services-section");
+        } else {
+          console.error("Error fetching database schema values:", error);
+        }
       } finally {
         setLoading(false);
       }
@@ -66,7 +74,7 @@ export default function ServicesAdmin() {
 
     setSaving(true);
     try {
-      const res = await fetch(`https://backend.digikraftsocial.com/api/services-section/${sectionId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com"}/api/services-section/${sectionId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

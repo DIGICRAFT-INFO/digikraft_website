@@ -48,10 +48,10 @@ const Dashboard = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [postsRes, usersRes, categoriesRes, projectsRes] = await Promise.all([
-        axios.get(`${API}/posts`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/users`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/categories`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/projects`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/posts`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/users`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/categories`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/projects`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
       ]);
 
       setPosts(postsRes.data);

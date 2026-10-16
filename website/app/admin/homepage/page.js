@@ -29,14 +29,22 @@ export default function PageManager() {
   }, []);
 
   const fetchPageData = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch("https://backend.digikraftsocial.com/api/pages/homepage");
+      const res = await fetch((process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/pages/homepage", { signal: controller.signal });
+      clearTimeout(timeoutId);
       const json = await res.json();
       if (json.success && json.data) {
         setPageData(json.data);
       }
     } catch (error) {
-      console.error("Error fetching page data:", error);
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        console.warn("Fetch aborted (timeout): homepage data");
+      } else {
+        console.error("Error fetching page data:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -44,7 +52,7 @@ export default function PageManager() {
 
   const updatePageInDB = async () => {
     try {
-      const res = await fetch(`https://backend.digikraftsocial.com/api/pages/homepage`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com"}/api/pages/homepage`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(pageData),

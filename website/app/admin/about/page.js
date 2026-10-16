@@ -11,16 +11,25 @@ export default function AboutDashboard() {
   const [formData, setFormData] = useState({ year: "", heading: "", description: "" });
   const [editId, setEditId] = useState(null);
 
-  const API_URL = "https://backend.digikraftsocial.com/api/about";
+  const API_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/about";
 
   // Fetch entries from backend
   const fetchEntries = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(API_URL, { signal: controller.signal });
+      clearTimeout(timeoutId);
       const data = await res.json();
       if (res.ok) setEntries(data);
     } catch (err) {
-      console.error("Error fetching data:", err);
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        console.warn("Fetch aborted (timeout): about entries");
+      } else {
+        console.error("Error fetching data:", err);
+      }
+      setEntries([]);
     }
   };
 

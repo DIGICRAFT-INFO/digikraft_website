@@ -79,7 +79,7 @@ export default function ProjectsPage() {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const API_URL = "https://backend.digikraftsocial.com/api/projects";
+  const API_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/projects";
 
   useEffect(() => {
     fetchProjects();
@@ -87,14 +87,23 @@ export default function ProjectsPage() {
 
   const fetchProjects = async () => {
     setIsLoading(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     try {
-      const response = await fetch(API_URL);
+      const response = await fetch(API_URL, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (response.ok) {
         const data = await response.json();
         setProjects(data);
       }
     } catch (error) {
-      console.error("Failed to fetch projects:", error);
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        console.warn("Fetch aborted (timeout): projects");
+      } else {
+        console.error("Failed to fetch projects:", error);
+      }
+      setProjects([]);
     } finally {
       setIsLoading(false);
     }

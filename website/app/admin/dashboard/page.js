@@ -103,12 +103,12 @@ const Dashboard = () => {
       const token = localStorage.getItem("token");
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      // standard requests with fallbacks to avoid crashes
+      // standard requests with fallbacks to avoid crashes — 5 second timeout
       const [postsRes, usersRes, categoriesRes, projectsRes] = await Promise.all([
-        axios.get(`${API}/posts`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/auth`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/categories`, { headers }).catch(() => ({ data: [] })),
-        axios.get(`${API}/projects`, { headers }).catch(() => ({ data: [] })),
+        axios.get(`${API}/posts`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/auth`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/categories`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
+        axios.get(`${API}/projects`, { headers, timeout: 5000 }).catch(() => ({ data: [] })),
       ]);
 
       // Array validation ensure kar rahe hain taaki frontend crash na ho

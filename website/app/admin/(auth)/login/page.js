@@ -42,13 +42,11 @@ export default function Login() {
                 localStorage.setItem('token', response.data.token);
                 const userRole = response.data.role || 'user';
                 localStorage.setItem('role', userRole);
-                localStorage.setItem('userName', response.data.name || 'User');
+                localStorage.setItem('userName', response.data.name || response.data.user?.name || 'Admin');
                 localStorage.setItem('userEmail', email);
 
-                setSuccessMessage("Authentication verified successfully! Access granted.");
-                setPassword('');
-                
-                window.location.href = '/admin/dashboard'; 
+                // Force hard redirect to dashboard
+                window.location.replace('/admin/dashboard');
             } else {
                 throw new Error("Authorization payload missing token.");
             }
