@@ -14,7 +14,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     const role = localStorage.getItem('role');
 
     if (!token) {
-      router.push('/login');
+      router.push('/admin/login');
       return;
     }
 
@@ -35,14 +35,16 @@ export default function ProtectedRoute({ children, allowedRoles }) {
         }
         setIsAuthorized(true);
       } else {
-        // User deleted or invalid
+        // User deleted or invalid — only revoke if explicitly invalid
         handleAccessRevoked();
       }
     } catch (err) {
       if (err.response?.status === 401 || err.response?.status === 403) {
+        // Definitive auth failure — revoke
         handleAccessRevoked();
       } else {
-        // Network error — allow access with local token (offline mode)
+        // Network error, timeout, or server down — allow access with local token
+        console.warn('Verify endpoint unreachable, allowing cached session:', err.message);
         setIsAuthorized(true);
       }
     }
@@ -73,7 +75,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
           <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: '1.6', marginBottom: '24px' }}>
             Your access has been revoked by the Super Admin. Please contact the administrator to restore your access.
           </p>
-          <button onClick={() => { router.push('/login'); }} style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
+          <button onClick={() => { router.push('/admin/login'); }} style={{ background: '#dc2626', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: '600', cursor: 'pointer' }}>
             Go to Login
           </button>
         </div>

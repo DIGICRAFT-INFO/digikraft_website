@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 
 const PORTALS = [
   {
@@ -105,14 +104,15 @@ export default function LoginHub() {
         display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",
         gap:16, maxWidth:920, width:"100%", position:"relative", zIndex:1,
       }}>
-        {PORTALS.map(p => {
+      {PORTALS.map(p => {
           const on = hovered === p.id;
           return (
-            <Link key={p.id} href={p.href} style={{ textDecoration:"none" }}>
-              <div
-                onMouseEnter={()=>setHovered(p.id)}
-                onMouseLeave={()=>setHovered(null)}
-                style={{
+            <div
+              key={p.id}
+              onClick={() => { window.location.href = p.href; }}
+              onMouseEnter={()=>setHovered(p.id)}
+              onMouseLeave={()=>setHovered(null)}
+              style={{
                   background: on ? "rgba(255,255,255,.1)" : "rgba(255,255,255,.05)",
                   border: `1.5px solid ${on ? "rgba(255,255,255,.22)" : "rgba(255,255,255,.09)"}`,
                   borderRadius:16, padding:"22px 20px 18px",
@@ -170,7 +170,6 @@ export default function LoginHub() {
                   </div>
                 </div>
               </div>
-            </Link>
           );
         })}
       </div>
