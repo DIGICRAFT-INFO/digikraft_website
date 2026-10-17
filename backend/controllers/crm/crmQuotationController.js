@@ -3,6 +3,7 @@ const CrmQuotationItem = require('../../models/crm/CrmQuotationItem');
 const CrmProject = require('../../models/crm/CrmProject');
 const CrmHistory = require('../../models/crm/CrmHistory');
 const CrmNotification = require('../../models/crm/CrmNotification');
+const CrmSettings = require('../../models/crm/CrmSettings');
 
 const log = async (req, action, id, label, desc = '') => {
   try {
@@ -10,10 +11,26 @@ const log = async (req, action, id, label, desc = '') => {
   } catch {}
 };
 
-const genQuoteNumber = async () => {
-  const count = await CrmQuotation.countDocuments();
-  const year = new Date().getFullYear();
-  return `DKS-Q-${year}-${String(count + 1).padStart(4, '0')}`;
+/* ── Read settings once (cached per request, not globally) ── */
+const getSettings = async () => {
+  try {
+    return await CrmSettings.findById('crm_settings') || {};
+  } catch { return {}; }
+};
+
+const genQuoteNumber = async (settings) => {
+  const prefix = settings?.quotation_prefix || 'DKS-Q';
+  const year   = new Date().getFullYear();
+  /* Use countDocuments + 1 but check for uniqueness collision (safe for low concurrency) */
+  const count  = await CrmQuotation.countDocuments();
+  let seq = count + 1;
+  let num = `${prefix}-${year}-${String(seq).padStart(4, '0')}`;
+  /* Collision guard */
+  while (await CrmQuotation.exists({ quote_number: num })) {
+    seq++;
+    num = `${prefix}-${year}-${String(seq).padStart(4, '0')}`;
+  }
+  return num;
 };
 
 const calcTotals = (items = [], discType = 'fixed', discVal = 0, cgstRate = 9, sgstRate = 9, igstRate = 0) => {
@@ -60,16 +77,46 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { project: projectId, client_name_direct, items = [], discount_type = 'fixed', discount_value = 0, cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
+    const settings = await getSettings();
 
-    // Project is now OPTIONAL — can pass client_name_direct instead
+    /* Merge settings GST defaults with request body (body overrides settings) */
+    const {
+      project: projectId,
+      client_name_direct,
+      items = [],
+      discount_type  = 'fixed',
+      discount_value = 0,
+      cgst_rate  = settings.default_cgst_rate  ?? 9,
+      sgst_rate  = settings.default_sgst_rate  ?? 9,
+      igst_rate  = settings.default_igst_rate  ?? 0,
+      hsn_sac    = settings.default_hsn_sac    || '998319',
+      place_of_supply = settings.place_of_supply || 'Chhattisgarh',
+      ...rest
+    } = req.body;
+
     const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
-    const quote_number = await genQuoteNumber();
+    const quote_number = await genQuoteNumber(settings);
     const totals = calcTotals(items, discount_type, discount_value, cgst_rate, sgst_rate, igst_rate);
 
     const client = project?.client || null;
-    // Use direct client name if no project selected
     const resolvedClientName = client?.full_name || client?.company_name || project?.client_name_snapshot || client_name_direct || '';
+
+    /* ── Company + bank snapshot from settings ── */
+    const companySn = {
+      company_name_snapshot:    settings.company_name    || '',
+      company_address_snapshot: settings.company_address || '',
+      company_city_snapshot:    settings.company_city    || '',
+      company_state_snapshot:   settings.company_state   || '',
+      company_gstin_snapshot:   settings.gstin           || '',
+      company_email_snapshot:   settings.company_email   || '',
+      company_phone_snapshot:   settings.company_phone   || '',
+      company_logo_snapshot:    settings.company_logo    || '',
+      bank_name_snapshot:       settings.bank_name       || '',
+      account_name_snapshot:    settings.account_name    || '',
+      account_number_snapshot:  settings.account_number  || '',
+      ifsc_code_snapshot:       settings.ifsc_code       || '',
+      upi_id_snapshot:          settings.upi_id          || '',
+    };
 
     const quotation = await CrmQuotation.create({
       project: projectId || null,
@@ -80,8 +127,10 @@ exports.create = async (req, res) => {
       client_address_snapshot: client?.billing_address || '',
       client_state_snapshot:   client?.state || '',
       billing_address:         client?.billing_address || '',
-      discount_type, discount_value, cgst_rate, sgst_rate, igst_rate,
-      ...totals, ...rest,
+      discount_type, discount_value,
+      cgst_rate, sgst_rate, igst_rate,
+      hsn_sac, place_of_supply,
+      ...companySn, ...totals, ...rest,
     });
     if (items.length) {
       for (let i = 0; i < items.length; i++) {

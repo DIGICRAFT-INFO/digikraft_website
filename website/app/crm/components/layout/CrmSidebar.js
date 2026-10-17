@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Receipt,
   CreditCard, Package, UserCheck, MessageSquare,
-  History, Bell, Settings, X, TrendingUp, PhoneCall,
+  History, Bell, Settings, X, TrendingUp, PhoneCall, BarChart2,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -34,6 +34,7 @@ const NAV_SECTIONS = [
       { id:"services",      label:"Service Catalog", href:"/crm/dashboard/services",      icon:Package,    roles:["owner","manager"] },
       { id:"pending-users", label:"User Approvals",  href:"/crm/dashboard/pending-users", icon:UserCheck,  roles:["owner","manager"] },
       { id:"history",       label:"Activity Log",    href:"/crm/dashboard/history",       icon:History,    roles:["owner","manager"] },
+      { id:"reports",       label:"Reports",         href:"/crm/dashboard/reports",       icon:BarChart2,  roles:["owner","manager"] },
       { id:"notifications", label:"Notifications",   href:"/crm/dashboard/notifications", icon:Bell,       roles:["owner","manager","accountant","executive"] },
       { id:"settings",      label:"Settings",        href:"/crm/dashboard/settings",      icon:Settings,   roles:["owner","manager"] },
     ],

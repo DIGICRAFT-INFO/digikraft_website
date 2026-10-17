@@ -296,7 +296,24 @@ body, .crm-root {
 
 /* ── Print ───────────────────────────────────────────────── */
 @media print {
-  .crm-sidebar, .crm-header { display: none !important; }
-  .crm-main { overflow: visible; }
-  .crm-content { padding: 0; }
+  /* Hide entire CRM shell — sidebar, header, action bars, toasts */
+  aside,
+  header,
+  .crm-sidebar,
+  .crm-header,
+  .no-print              { display: none !important; }
+
+  /* Reset layout so document fills full page */
+  html, body             { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+  .crm-layout            { display: block !important; height: auto !important; overflow: visible !important; }
+  .crm-main              { display: block !important; width: 100% !important; overflow: visible !important; }
+  .crm-content           { padding: 0 !important; overflow: visible !important; height: auto !important; }
+
+  /* Ensure the document fills the paper */
+  #crm-pdf-document      { box-shadow: none !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; }
+
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
 }

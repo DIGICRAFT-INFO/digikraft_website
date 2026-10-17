@@ -30,8 +30,27 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     const q = clientId ? `/projects?client=${clientId}` : "/projects";
-    Promise.all([CRM_API.get(q), CRM_API.get("/services")])
-      .then(([{data:p},{data:s}]) => { setProjects(p); setServices(s.filter(x=>x.status==="active")); })
+    Promise.all([CRM_API.get(q), CRM_API.get("/services"), CRM_API.get("/settings")])
+      .then(([{data:p},{data:s},{data:cfg}]) => {
+        setProjects(p);
+        setServices(s.filter(x=>x.status==="active"));
+        // Prefill GST defaults + auto due_date from settings
+        setForm(prev => {
+          const cgst = cfg.default_cgst_rate ?? prev.cgst_rate;
+          const sgst = cfg.default_sgst_rate ?? prev.sgst_rate;
+          const igst = cfg.default_igst_rate ?? prev.igst_rate;
+          const hsn  = cfg.default_hsn_sac   || prev.hsn_sac;
+          const pos  = cfg.place_of_supply    || prev.place_of_supply;
+          // Auto due_date: invoice_date + default_due_days
+          let due_date = prev.due_date;
+          if (!due_date && prev.invoice_date && cfg.default_due_days) {
+            const d = new Date(prev.invoice_date);
+            d.setDate(d.getDate() + cfg.default_due_days);
+            due_date = d.toISOString().split("T")[0];
+          }
+          return { ...prev, cgst_rate:cgst, sgst_rate:sgst, igst_rate:igst, hsn_sac:hsn, place_of_supply:pos, due_date };
+        });
+      })
       .catch(()=>{});
   }, [clientId]);
 

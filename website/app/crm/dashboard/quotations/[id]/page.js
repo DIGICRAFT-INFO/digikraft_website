@@ -257,7 +257,7 @@ export default function QuotationPrintPage() {
           account_no:  s.account_number,
           ifsc:        s.ifsc_code,
           upi:         s.upi_id,
-          logo:        DEFAULT_COMPANY.logo,
+          logo:        s.company_logo || DEFAULT_COMPANY.logo,
         });
       } catch {}
     } catch { router.replace("/crm/dashboard/quotations"); }
@@ -518,7 +518,19 @@ export default function QuotationPrintPage() {
       {showCopy && <CopyModal q={q} projects={projects} onClose={()=>setShowCopy(false)} onDone={()=>{ setShowCopy(false); showToast("Copy created! Redirecting…"); setTimeout(()=>router.replace("/crm/dashboard/quotations"),1500); }}/>}
       {showHistory && <HistoryPanel entityType="quotation" entityId={id} onClose={()=>setShowHistory(false)}/>}
 
-      <style>{`@media print{.no-print{display:none!important}body{margin:0}@page{margin:10mm;size:A4}}body{background:#f1f5f9}@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}`}</style>
+      <style>{`
+        @media print {
+          aside, header, .no-print { display: none !important; }
+          html, body { background: #fff !important; margin: 0 !important; padding: 0 !important; }
+          .crm-layout { display: block !important; height: auto !important; overflow: visible !important; }
+          .crm-main   { display: block !important; width: 100% !important; overflow: visible !important; }
+          .crm-content{ padding: 0 !important; overflow: visible !important; height: auto !important; }
+          #crm-pdf-document { box-shadow: none !important; margin: 0 auto !important; width: 100% !important; max-width: 100% !important; }
+          @page { size: A4 portrait; margin: 10mm 12mm; }
+        }
+        body { background: #f1f5f9; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+      `}</style>
     </>
   );
 }

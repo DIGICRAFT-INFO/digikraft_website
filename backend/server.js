@@ -150,6 +150,7 @@ app.use("/api/crm/notifications", require("./routes/crm/crmNotificationRoutes"))
 app.use("/api/crm/history",       require("./routes/crm/crmHistoryRoutes"));
 app.use("/api/crm/settings",      require("./routes/crm/crmSettingsRoutes"));
 app.use("/api/crm/followups",     require("./routes/crm/crmFollowUpRoutes"));
+app.use("/api/crm/reports",       require("./routes/crm/crmReportRoutes"));
 
 // ── HRM ─────────────────────────────────────────────────────────
 app.use("/api/hrm/auth",          require("./routes/hrm/hrmAuthRoutes"));

@@ -4,6 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import CrmSidebar from "../components/layout/CrmSidebar";
 import CrmHeader from "../components/layout/CrmHeader";
 import CRM_API from "@/utils/crmApi";
+import ReminderBanner from "@/components/crm/ReminderBanner";
 import "../../crm/crm.css";
 
 export default function CrmDashboardLayout({ children }) {
@@ -130,6 +131,7 @@ export default function CrmDashboardLayout({ children }) {
           onSidebarSideToggle={handleSideToggle}
         />
         <main className="crm-content" style={{ flex: 1, overflowY: "auto" }}>
+          <ReminderBanner />
           {children}
         </main>
       </div>

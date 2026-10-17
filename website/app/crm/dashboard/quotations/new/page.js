@@ -29,8 +29,20 @@ export default function NewQuotationPage() {
 
   useEffect(() => {
     const q = clientId ? `/projects?client=${clientId}` : "/projects";
-    Promise.all([CRM_API.get(q), CRM_API.get("/services")])
-      .then(([{data:p},{data:s}]) => { setProjects(p); setServices(s.filter(x=>x.status==="active")); })
+    Promise.all([CRM_API.get(q), CRM_API.get("/services"), CRM_API.get("/settings")])
+      .then(([{data:p},{data:s},{data:cfg}]) => {
+        setProjects(p);
+        setServices(s.filter(x=>x.status==="active"));
+        // Prefill GST defaults from settings
+        setForm(prev => ({
+          ...prev,
+          cgst_rate:       cfg.default_cgst_rate ?? prev.cgst_rate,
+          sgst_rate:       cfg.default_sgst_rate ?? prev.sgst_rate,
+          igst_rate:       cfg.default_igst_rate ?? prev.igst_rate,
+          hsn_sac:         cfg.default_hsn_sac   || prev.hsn_sac,
+          place_of_supply: cfg.place_of_supply    || prev.place_of_supply,
+        }));
+      })
       .catch(()=>{});
   }, [clientId]);
 

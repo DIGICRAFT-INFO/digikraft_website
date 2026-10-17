@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, X, Receipt, Search, Eye } from "lucide-react";
 import CRM_API from "@/utils/crmApi";
+import ExportButton from "@/components/crm/ExportButton";
+import { QUOTATION_COLUMNS } from "@/utils/exportUtils";
 
 const EMPTY_ITEM = { description: "", quantity: 1, unit_price: 0, total_price: 0 };
 const EMPTY = { project: "", status: "draft", valid_until: "", discount_type: "fixed", discount_value: 0, cgst_rate: 9, sgst_rate: 9, igst_rate: 0, hsn_sac: "998319", place_of_supply: "Chhattisgarh", notes: "", items: [{ ...EMPTY_ITEM }] };
@@ -87,6 +89,7 @@ export default function CrmQuotationsPage() {
         <Link href="/crm/dashboard/quotations/new" style={{ display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",textDecoration:"none" }}>
           <Plus size={16} /> New Quotation
         </Link>
+        <ExportButton data={items} columns={QUOTATION_COLUMNS} type="Quotations" />
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>

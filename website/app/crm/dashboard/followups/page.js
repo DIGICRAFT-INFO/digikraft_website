@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import CRM_API from "@/utils/crmApi";
 import {
   Phone, Mail, MessageCircle, Video, Linkedin, MoreHorizontal,
@@ -9,6 +10,8 @@ import {
   Users, DollarSign, Activity, ArrowUpRight, Zap, Tag,
   MessageSquare, IndianRupee, Star,
 } from "lucide-react";
+import ExportButton from "@/components/crm/ExportButton";
+import { FOLLOWUP_COLUMNS } from "@/utils/exportUtils";
 
 /* ── constants ──────────────────────────────────────────── */
 const CHANNELS = [
@@ -525,8 +528,16 @@ export default function FollowUpsPage() {
   const [loading,    setLoading]    = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // UI state
-  const [view,     setView]     = useState("all");
+  const searchParams = useSearchParams();
+
+  // UI state — initialise view from URL ?view= param (used by ReminderBanner deep-links)
+  const [view,     setView]     = useState(() => searchParams.get("view") || "all");
+
+  // Keep view in sync if URL param changes (e.g. back-button or banner link click)
+  useEffect(() => {
+    const v = searchParams.get("view");
+    if (v) setView(v);
+  }, [searchParams]);
   const [search,   setSearch]   = useState("");
   const [filterStatus,   setFilterStatus]   = useState("");
   const [filterChannel,  setFilterChannel]  = useState("");
@@ -616,6 +627,7 @@ export default function FollowUpsPage() {
           <button onClick={() => setShowFilters(p=>!p)} style={{ display:"flex", alignItems:"center", gap:"5px", padding:"8px 14px", background: showFilters ? "#f0fdf4":"#f8fafc", border:`1px solid ${showFilters?"#bbf7d0":"#e2e8f0"}`, borderRadius:"8px", fontSize:"12px", fontWeight:"600", color: showFilters?"#16a34a":"#64748b", cursor:"pointer" }}>
             <Filter size={13} /> Filters
           </button>
+          <ExportButton data={followups} columns={FOLLOWUP_COLUMNS} type="FollowUps" />
           <button onClick={() => setEditItem({})} style={{ display:"flex", alignItems:"center", gap:"6px", padding:"8px 18px", background:"linear-gradient(135deg,#22c55e,#16a34a)", border:"none", borderRadius:"8px", fontSize:"13px", fontWeight:"700", color:"#fff", cursor:"pointer" }}>
             <Plus size={15} /> New Follow-Up
           </button>

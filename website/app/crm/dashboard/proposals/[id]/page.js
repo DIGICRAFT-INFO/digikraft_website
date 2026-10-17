@@ -154,7 +154,8 @@ export default function ProposalPrintPage() {
       setP(prop); setProjects(proj);
       try {
         const { data: s } = await CRM_API.get("/settings");
-        if (s.company_name) setCompany({ name:s.company_name, address:s.company_address, city:`${s.company_city}, ${s.company_state} India ${s.company_pincode}`, phone:s.company_phone, email:s.company_email, gstin:s.gstin, state:s.company_state, logo:DEFAULT_COMPANY.logo });
+        if (s.company_name) setCompany({ name:s.company_name, address:s.company_address, city:`${s.company_city}, ${s.company_state} India ${s.company_pincode}`, phone:s.company_phone, email:s.company_email, gstin:s.gstin, state:s.company_state, logo: s.company_logo || DEFAULT_COMPANY.logo,
+            bank_name:s.bank_name||DEFAULT_COMPANY.bank_name, account_name:s.account_name||DEFAULT_COMPANY.account_name, account_no:s.account_number||DEFAULT_COMPANY.account_no, ifsc:s.ifsc_code||DEFAULT_COMPANY.ifsc, upi:s.upi_id||DEFAULT_COMPANY.upi });
       } catch {}
     } catch { router.replace("/crm/dashboard/proposals"); }
     finally { setLoading(false); }
@@ -334,7 +335,7 @@ export default function ProposalPrintPage() {
 
       {showCopy    && <CopyModal p={p} projects={projects} onClose={()=>setShowCopy(false)} onDone={()=>{ setShowCopy(false); showToast("Copy created!"); setTimeout(()=>router.replace("/crm/dashboard/proposals"),1500); }}/>}
       {showHistory && <HistoryPanel entityType="proposal" entityId={id} onClose={()=>setShowHistory(false)}/>}
-      <style>{`@media print{.no-print{display:none!important}body{margin:0}@page{margin:10mm;size:A4}}body{background:#f1f5f9}`}</style>
+      <style>{`@media print{aside,header,.no-print{display:none!important}html,body{background:#fff!important;margin:0!important;padding:0!important}.crm-layout{display:block!important;height:auto!important;overflow:visible!important}.crm-main{display:block!important;width:100%!important;overflow:visible!important}.crm-content{padding:0!important;overflow:visible!important;height:auto!important}#crm-pdf-document{box-shadow:none!important;margin:0 auto!important;width:100%!important;max-width:100%!important}@page{size:A4 portrait;margin:10mm 12mm}}body{background:#f1f5f9}`}</style>
     </>
   );
 }

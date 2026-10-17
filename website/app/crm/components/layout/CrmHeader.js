@@ -21,6 +21,7 @@ const PAGE_TITLES = {
   "/crm/dashboard/notifications":  { title: "Notifications",    sub: "Alerts & updates" },
   "/crm/dashboard/settings":       { title: "Settings",         sub: "Company, tax & billing config" },
   "/crm/dashboard/followups":      { title: "Follow-Ups",       sub: "Track every client interaction" },
+  "/crm/dashboard/reports":        { title: "Reports",           sub: "Revenue, pipeline & business analytics" },
 };
 
 function getPageMeta(pathname) {

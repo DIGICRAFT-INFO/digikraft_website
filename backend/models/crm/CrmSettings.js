@@ -46,11 +46,32 @@ const crmSettingsSchema = new mongoose.Schema(
     // ── Payment Terms ─────────────────────────────────────────────────────────
     default_due_days:      { type: Number, default: 30 },
     late_fee_percent:      { type: Number, default: 1.5 },
-    payment_terms_text:    { type: String, default: '' }, // custom terms override
+    payment_terms_text:    { type: String, default: '' },
 
     // ── Signature / Footer ────────────────────────────────────────────────────
     invoice_footer_text: { type: String, default: 'This is a Computer Generated Invoice' },
     signature_name:      { type: String, default: '' },
+
+    // ── SMTP / Email Settings ─────────────────────────────────────────────────
+    smtp_host:        { type: String, default: '' },
+    smtp_port:        { type: Number, default: 587 },
+    smtp_secure:      { type: Boolean, default: false },
+    smtp_user:        { type: String, default: '' },
+    smtp_pass:        { type: String, default: '' },  // stored encrypted ideally; env var takes precedence
+    smtp_from_name:   { type: String, default: 'DigiKraft Social CRM' },
+    smtp_from_email:  { type: String, default: '' },
+    email_signature:  { type: String, default: '' },  // HTML/text appended to all emails
+
+    // ── Reminder Settings ─────────────────────────────────────────────────────
+    reminder_enabled:       { type: Boolean, default: true },
+    reminder_days_before:   { type: Number,  default: 1 },   // remind N days before follow-up due
+    reminder_email_enabled: { type: Boolean, default: false },
+    reminder_browser_enabled: { type: Boolean, default: true },
+
+    // ── Google Sheets / Export ────────────────────────────────────────────────
+    google_sheets_enabled:  { type: Boolean, default: false },
+    google_sheets_id:       { type: String, default: '' },   // spreadsheet ID for auto-sync
+    export_currency:        { type: String, default: '₹' },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

@@ -4,6 +4,7 @@ const CrmProject = require('../../models/crm/CrmProject');
 const CrmClient = require('../../models/crm/CrmClient');
 const CrmHistory = require('../../models/crm/CrmHistory');
 const CrmNotification = require('../../models/crm/CrmNotification');
+const CrmSettings = require('../../models/crm/CrmSettings');
 
 const log = async (req, action, id, label, desc = '') => {
   try {
@@ -11,10 +12,21 @@ const log = async (req, action, id, label, desc = '') => {
   } catch {}
 };
 
-const genInvNumber = async () => {
-  const count = await CrmInvoice.countDocuments();
-  const year = new Date().getFullYear();
-  return `DKS-INV-${year}-${String(count + 1).padStart(4, '0')}`;
+const getSettings = async () => {
+  try { return await CrmSettings.findById('crm_settings') || {}; } catch { return {}; }
+};
+
+const genInvNumber = async (settings) => {
+  const prefix = settings?.invoice_prefix || 'DKS-INV';
+  const year   = new Date().getFullYear();
+  const count  = await CrmInvoice.countDocuments();
+  let seq = count + 1;
+  let num = `${prefix}-${year}-${String(seq).padStart(4, '0')}`;
+  while (await CrmInvoice.exists({ invoice_number: num })) {
+    seq++;
+    num = `${prefix}-${year}-${String(seq).padStart(4, '0')}`;
+  }
+  return num;
 };
 
 const calcTotals = (items = [], cgstRate = 9, sgstRate = 9, igstRate = 0) => {
@@ -59,20 +71,55 @@ exports.getOne = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { project: projectId, client_name_direct, items = [], cgst_rate = 9, sgst_rate = 9, igst_rate = 0, ...rest } = req.body;
+    const settings = await getSettings();
 
-    // Project is now OPTIONAL — can pass client_name_direct instead
+    const {
+      project: projectId,
+      client_name_direct,
+      items = [],
+      cgst_rate  = settings.default_cgst_rate  ?? 9,
+      sgst_rate  = settings.default_sgst_rate  ?? 9,
+      igst_rate  = settings.default_igst_rate  ?? 0,
+      hsn_sac    = settings.default_hsn_sac    || '998319',
+      place_of_supply = settings.place_of_supply || 'Chhattisgarh',
+      ...rest
+    } = req.body;
+
+    /* Auto-compute due_date from default_due_days if not provided */
+    if (!rest.due_date && rest.invoice_date && settings.default_due_days) {
+      const d = new Date(rest.invoice_date);
+      d.setDate(d.getDate() + (settings.default_due_days || 30));
+      rest.due_date = d.toISOString();
+    }
+
     const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
-    const invoice_number = await genInvNumber();
+    const invoice_number = await genInvNumber(settings);
     const totals = calcTotals(items, cgst_rate, sgst_rate, igst_rate);
 
-    const CrmClient = require('../../models/crm/CrmClient');
     const client = project?.client
       ? (typeof project.client === 'object' ? project.client : await CrmClient.findById(project.client))
       : null;
 
-    // Use direct client name if no project selected
     const resolvedClientName = client?.full_name || client?.company_name || project?.client_name_snapshot || client_name_direct || '';
+
+    /* ── Company + bank snapshot from settings ── */
+    const companySn = {
+      company_name_snapshot:    settings.company_name    || '',
+      company_address_snapshot: settings.company_address || '',
+      company_city_snapshot:    settings.company_city    || '',
+      company_state_snapshot:   settings.company_state   || '',
+      company_gstin_snapshot:   settings.gstin           || '',
+      company_email_snapshot:   settings.company_email   || '',
+      company_phone_snapshot:   settings.company_phone   || '',
+      company_logo_snapshot:    settings.company_logo    || '',
+      bank_name_snapshot:       settings.bank_name       || '',
+      account_name_snapshot:    settings.account_name    || '',
+      account_number_snapshot:  settings.account_number  || '',
+      ifsc_code_snapshot:       settings.ifsc_code       || '',
+      upi_id_snapshot:          settings.upi_id          || '',
+      footer_text_snapshot:     settings.invoice_footer_text || '',
+      payment_terms_snapshot:   settings.payment_terms_text  || '',
+    };
 
     const invoice = await CrmInvoice.create({
       project: projectId || null, invoice_number,
@@ -82,7 +129,9 @@ exports.create = async (req, res) => {
       client_address_snapshot: client?.billing_address || '',
       client_state_snapshot:   client?.state || '',
       billing_address:         client?.billing_address || '',
-      cgst_rate, sgst_rate, igst_rate, ...totals, ...rest,
+      cgst_rate, sgst_rate, igst_rate,
+      hsn_sac, place_of_supply,
+      ...companySn, ...totals, ...rest,
     });
     if (items.length) {
       for (let i = 0; i < items.length; i++) {

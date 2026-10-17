@@ -3,6 +3,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { Plus, Edit2, Trash2, X, FileText, Search, Eye } from "lucide-react";
 import CRM_API from "@/utils/crmApi";
+import ExportButton from "@/components/crm/ExportButton";
+import { PROPOSAL_COLUMNS } from "@/utils/exportUtils";
 
 const EMPTY = { project: "", title: "", content: "", status: "draft", valid_until: "", notes: "", services: [] };
 const STATUS_MAP = { draft:["#f1f5f9","#475569"], sent:["#dbeafe","#1d4ed8"], accepted:["#dcfce7","#15803d"], rejected:["#fee2e2","#dc2626"] };
@@ -76,6 +78,7 @@ export default function CrmProposalsPage() {
         <Link href="/crm/dashboard/proposals/new" style={{ display:"flex",alignItems:"center",gap:"6px",padding:"10px 18px",background:"#22c55e",color:"#fff",border:"none",borderRadius:"8px",fontSize:"13px",fontWeight:"700",cursor:"pointer",textDecoration:"none" }}>
           <Plus size={16} /> New Proposal
         </Link>
+        <ExportButton data={items} columns={PROPOSAL_COLUMNS} type="Proposals" />
       </div>
 
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
