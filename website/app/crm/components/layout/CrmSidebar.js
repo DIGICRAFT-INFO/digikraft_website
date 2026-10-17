@@ -4,24 +4,39 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Receipt,
-  CreditCard, DollarSign, ShieldAlert, MessageSquare,
-  Clock, Bell, Wrench, X,
+  CreditCard, Package, UserCheck, MessageSquare,
+  History, Bell, Settings, X, TrendingUp,
 } from "lucide-react";
 
-const navItems = [
-  { id: "dashboard",     label: "Dashboard",     href: "/crm/dashboard",                icon: LayoutDashboard, roles: ["owner","manager","accountant","executive"] },
-  { id: "clients",       label: "Clients",        href: "/crm/dashboard/clients",        icon: Users,           roles: ["owner","manager","executive"] },
-  { id: "services",      label: "Services",       href: "/crm/dashboard/services",       icon: Wrench,          roles: ["owner","manager"] },
-  { id: "projects",      label: "Projects",       href: "/crm/dashboard/projects",       icon: Briefcase,       roles: ["owner","manager","executive"] },
-  { id: "proposals",     label: "Proposals",      href: "/crm/dashboard/proposals",      icon: FileText,        roles: ["owner","manager","executive"] },
-  { id: "quotations",    label: "Quotations",     href: "/crm/dashboard/quotations",     icon: Receipt,         roles: ["owner","manager"] },
-  { id: "invoices",      label: "Invoices",       href: "/crm/dashboard/invoices",       icon: FileText,        roles: ["owner","manager","accountant"] },
-  { id: "payments",      label: "Payments",       href: "/crm/dashboard/payments",       icon: CreditCard,      roles: ["owner","manager","accountant"] },
-  { id: "pending-users", label: "Pending Users",  href: "/crm/dashboard/pending-users",  icon: ShieldAlert,     roles: ["owner","manager"] },
-  { id: "enquiries",     label: "Enquiries",      href: "/crm/dashboard/enquiries",      icon: MessageSquare,   roles: ["owner","manager","executive"] },
-  { id: "history",       label: "History",        href: "/crm/dashboard/history",        icon: Clock,           roles: ["owner","manager"] },
-  { id: "notifications", label: "Notifications",  href: "/crm/dashboard/notifications",  icon: Bell,            roles: ["owner","manager","accountant","executive"] },
-  { id: "settings",      label: "Settings",       href: "/crm/dashboard/settings",       icon: Wrench,          roles: ["owner","manager"] },
+const NAV_ITEMS = [
+  {
+    section: "Main",
+    items: [
+      { id: "dashboard",  label: "Dashboard",        href: "/crm/dashboard",               icon: LayoutDashboard, roles: ["owner","manager","accountant","executive"] },
+      { id: "clients",    label: "Clients",           href: "/crm/dashboard/clients",       icon: Users,           roles: ["owner","manager","executive"] },
+      { id: "projects",   label: "Projects",          href: "/crm/dashboard/projects",      icon: Briefcase,       roles: ["owner","manager","executive"] },
+      { id: "enquiries",  label: "Enquiries",         href: "/crm/dashboard/enquiries",     icon: MessageSquare,   roles: ["owner","manager","executive"] },
+    ],
+  },
+  {
+    section: "Sales",
+    items: [
+      { id: "proposals",  label: "Proposals",         href: "/crm/dashboard/proposals",     icon: FileText,        roles: ["owner","manager","executive"] },
+      { id: "quotations", label: "Quotations",        href: "/crm/dashboard/quotations",    icon: Receipt,         roles: ["owner","manager"] },
+      { id: "invoices",   label: "Invoices",          href: "/crm/dashboard/invoices",      icon: FileText,        roles: ["owner","manager","accountant"] },
+      { id: "payments",   label: "Payments",          href: "/crm/dashboard/payments",      icon: CreditCard,      roles: ["owner","manager","accountant"] },
+    ],
+  },
+  {
+    section: "Manage",
+    items: [
+      { id: "services",      label: "Service Catalog", href: "/crm/dashboard/services",      icon: Package,         roles: ["owner","manager"] },
+      { id: "pending-users", label: "User Approvals",  href: "/crm/dashboard/pending-users", icon: UserCheck,       roles: ["owner","manager"] },
+      { id: "history",       label: "Activity Log",    href: "/crm/dashboard/history",       icon: History,         roles: ["owner","manager"] },
+      { id: "notifications", label: "Notifications",   href: "/crm/dashboard/notifications", icon: Bell,            roles: ["owner","manager","accountant","executive"] },
+      { id: "settings",      label: "Settings",        href: "/crm/dashboard/settings",      icon: Settings,        roles: ["owner","manager"] },
+    ],
+  },
 ];
 
 export default function CrmSidebar({ mobileOpen, onClose }) {
@@ -36,7 +51,6 @@ export default function CrmSidebar({ mobileOpen, onClose }) {
     } catch {}
   }, []);
 
-  // Track mobile breakpoint reliably via resize listener
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -44,7 +58,10 @@ export default function CrmSidebar({ mobileOpen, onClose }) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const visible = navItems.filter(i => i.roles.includes(userRole));
+  const isActive = (href) =>
+    href === "/crm/dashboard"
+      ? pathname === "/crm/dashboard"
+      : pathname === href || pathname.startsWith(href + "/");
 
   return (
     <>
@@ -54,132 +71,158 @@ export default function CrmSidebar({ mobileOpen, onClose }) {
           onClick={onClose}
           style={{
             position: "fixed", inset: 0,
-            background: "rgba(15,23,42,.45)",
+            background: "rgba(15,23,42,.5)",
             zIndex: 99,
-            backdropFilter: "blur(2px)",
+            backdropFilter: "blur(3px)",
           }}
         />
       )}
 
-      <aside
-        style={{
-          width: "220px",
-          height: "100vh",
-          background: "#fff",
-          borderRight: "1px solid #e2e8f0",
-          display: "flex",
-          flexDirection: "column",
-          flexShrink: 0,
-          overflowY: "auto",
-          overflowX: "hidden",
-          // On mobile: fixed + slide in/out. On desktop: static in flex row.
-          position: isMobile ? "fixed" : "relative",
-          top: 0,
-          left: 0,
-          zIndex: isMobile ? 100 : "auto",
-          transform: isMobile ? (mobileOpen ? "translateX(0)" : "translateX(-100%)") : "none",
-          transition: "transform .28s cubic-bezier(.4,0,.2,1)",
-          boxShadow: isMobile && mobileOpen ? "4px 0 24px rgba(0,0,0,.12)" : "none",
-        }}>
+      <aside style={{
+        width: "230px",
+        height: "100vh",
+        background: "#fff",
+        borderRight: "1px solid #e2e8f0",
+        display: "flex",
+        flexDirection: "column",
+        flexShrink: 0,
+        overflowY: "auto",
+        overflowX: "hidden",
+        scrollbarWidth: "thin",
+        scrollbarColor: "#e2e8f0 transparent",
+        position: isMobile ? "fixed" : "relative",
+        top: 0, left: 0,
+        zIndex: isMobile ? 100 : "auto",
+        transform: isMobile ? (mobileOpen ? "translateX(0)" : "translateX(-100%)") : "none",
+        transition: "transform .28s cubic-bezier(.4,0,.2,1)",
+        boxShadow: isMobile && mobileOpen ? "6px 0 28px rgba(0,0,0,.14)" : "none",
+      }}>
 
-        {/* Logo */}
+        {/* ── Logo ── */}
         <div style={{
-          padding: "18px 18px 14px",
+          padding: "16px 18px",
           borderBottom: "1px solid #f1f5f9",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          flexShrink: 0,
+          flexShrink: 0, minHeight: "66px",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{
-              width: "32px", height: "32px",
+            {/* DigiKraft Logo image */}
+            <img
+              src="/assets/imgs/template/logo.png"
+              alt="DigiKraft Social"
+              style={{ height: "28px", objectFit: "contain", display: "block" }}
+              onError={e => { e.target.style.display = "none"; }}
+            />
+            {/* CRM badge */}
+            <span style={{
+              fontSize: "9px", fontWeight: "800", letterSpacing: "0.12em",
+              textTransform: "uppercase",
               background: "linear-gradient(135deg,#22c55e,#16a34a)",
-              borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center",
-              flexShrink: 0,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-            <div>
-              <div style={{ fontSize: "13px", fontWeight: "800", color: "#14532d", lineHeight: 1.1 }}>DigiKraft</div>
-              <div style={{ fontSize: "9px", color: "#16a34a", fontWeight: "700", letterSpacing: "0.08em", textTransform: "uppercase" }}>CRM</div>
-            </div>
+              color: "#fff",
+              padding: "2px 7px", borderRadius: "5px",
+              lineHeight: "16px",
+            }}>CRM</span>
           </div>
-          {/* Close btn — mobile only */}
+
+          {/* Close — mobile only */}
           {isMobile && (
             <button onClick={onClose} style={{
-              background: "#f1f5f9", border: "none", borderRadius: "6px",
-              width: "28px", height: "28px",
+              background: "#f1f5f9", border: "none", borderRadius: "7px",
+              width: "30px", height: "30px",
               display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: "#64748b",
+              cursor: "pointer", color: "#64748b", flexShrink: 0,
             }}>
-              <X size={16} />
+              <X size={15} />
             </button>
           )}
         </div>
 
-        {/* Section label */}
-        <p style={{
-          fontSize: "10px", fontWeight: "700", letterSpacing: ".1em",
-          textTransform: "uppercase", color: "#94a3b8",
-          padding: "10px 18px 4px", margin: 0, flexShrink: 0,
-        }}>Menu</p>
-
-        {/* Nav links */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "2px", padding: "0 10px", flex: 1 }}>
-          {visible.map(item => {
-            const Icon = item.icon;
-            const active = pathname === item.href
-              || (item.href !== "/crm/dashboard" && pathname.startsWith(item.href));
+        {/* ── Nav sections ── */}
+        <div style={{ flex: 1, padding: "8px 0 4px", overflowY: "auto" }}>
+          {NAV_ITEMS.map(section => {
+            const visible = section.items.filter(i => i.roles.includes(userRole));
+            if (!visible.length) return null;
             return (
-              <Link
-                key={item.id}
-                href={item.href}
-                onClick={onClose}
-                style={{
-                  display: "flex", alignItems: "center", gap: "9px",
-                  padding: "10px 11px", borderRadius: "8px",
-                  textDecoration: "none", fontSize: "13px", fontWeight: "500",
-                  transition: "background .15s, color .15s",
-                  background: active ? "linear-gradient(135deg,#22c55e,#16a34a)" : "transparent",
-                  color: active ? "#fff" : "#475569",
-                }}
-                onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f0fdf4"; }}
-                onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
-              >
-                <Icon size={16} style={{ flexShrink: 0 }} />
-                <span style={{ flex: 1 }}>{item.label}</span>
-              </Link>
+              <div key={section.section} style={{ marginBottom: "4px" }}>
+                <p style={{
+                  fontSize: "9.5px", fontWeight: "700", letterSpacing: ".1em",
+                  textTransform: "uppercase", color: "#b0bec5",
+                  padding: "8px 18px 3px", margin: 0,
+                }}>{section.section}</p>
+
+                <nav style={{ padding: "0 8px" }}>
+                  {visible.map(item => {
+                    const Icon = item.icon;
+                    const active = isActive(item.href);
+                    return (
+                      <Link
+                        key={item.id}
+                        href={item.href}
+                        onClick={isMobile ? onClose : undefined}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "9px",
+                          padding: "9px 11px", borderRadius: "8px",
+                          textDecoration: "none", fontSize: "13px", fontWeight: active ? "600" : "500",
+                          marginBottom: "1px",
+                          background: active ? "linear-gradient(135deg,#22c55e,#16a34a)" : "transparent",
+                          color: active ? "#fff" : "#4a5568",
+                          transition: "all .15s",
+                          boxShadow: active ? "0 2px 8px rgba(34,197,94,.25)" : "none",
+                        }}
+                        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = "#f0fdf4"; e.currentTarget.style.color = "#15803d"; } }}
+                        onMouseLeave={e => { if (!active) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#4a5568"; } }}
+                      >
+                        <Icon size={15} style={{ flexShrink: 0, opacity: active ? 1 : 0.75 }} />
+                        <span style={{ flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {item.label}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
             );
           })}
-        </nav>
+        </div>
 
-        {/* Role footer */}
-        {/* Other Portals — HRM + EMP */}
-        <div style={{ borderTop:"1px solid #f1f5f9", margin:"8px 10px 0", paddingTop:8 }}>
-          <p style={{ fontSize:"9px", fontWeight:"700", color:"#94a3b8", textTransform:"uppercase", letterSpacing:".1em", padding:"0 8px 4px", margin:0 }}>Other Portals</p>
-          {[{ href:"/hrm/login", label:"HRM Portal", color:"#7c3aed", bg:"#f5f3ff", badge:"New" },
-            { href:"/emp/login", label:"EMP Portal", color:"#2563eb", bg:"#eff6ff", badge:"New" }].map(p => (
+        {/* ── Other Portals ── */}
+        <div style={{ borderTop: "1px solid #f1f5f9", padding: "10px 10px 6px", flexShrink: 0 }}>
+          <p style={{ fontSize: "9px", fontWeight: "700", color: "#b0bec5", textTransform: "uppercase", letterSpacing: ".1em", padding: "0 8px 5px", margin: 0 }}>
+            Other Portals
+          </p>
+          {[
+            { href: "/hrm/login",  label: "HR Management",   short: "HRM", color: "#7c3aed", bg: "#f5f3ff" },
+            { href: "/emp/login",  label: "Employee Portal",  short: "EMP", color: "#2563eb", bg: "#eff6ff" },
+            { href: "/admin/login",label: "Content Admin",   short: "CMS", color: "#0891b2", bg: "#ecfeff" },
+          ].map(p => (
             <a key={p.href} href={p.href} target="_blank" rel="noreferrer"
-              style={{ display:"flex", alignItems:"center", gap:"8px", padding:"8px 10px", borderRadius:"7px", textDecoration:"none", color:p.color, fontSize:"12px", fontWeight:"600", transition:"background .15s" }}
-              onMouseEnter={e=>e.currentTarget.style.background=p.bg}
-              onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
-              <span style={{ width:"8px", height:"8px", borderRadius:"50%", background:p.color, flexShrink:0 }}/>
+              style={{
+                display: "flex", alignItems: "center", gap: "9px",
+                padding: "7px 10px", borderRadius: "7px",
+                textDecoration: "none", fontSize: "12px", fontWeight: "500",
+                color: "#4a5568", transition: "all .15s", marginBottom: "1px",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.background = p.bg; e.currentTarget.style.color = p.color; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#4a5568"; }}>
+              <span style={{
+                fontSize: "8px", fontWeight: "800", padding: "2px 5px",
+                borderRadius: "4px", background: p.color, color: "#fff",
+                letterSpacing: ".05em", flexShrink: 0,
+              }}>{p.short}</span>
               {p.label}
-              <span style={{ fontSize:"8px",fontWeight:700,background:p.color,color:"#fff",padding:"1px 5px",borderRadius:8,marginLeft:2 }}>{p.badge}</span>
-              <span style={{ marginLeft:"auto", fontSize:"10px" }}>↗</span>
+              <span style={{ marginLeft: "auto", fontSize: "11px", opacity: 0.4 }}>↗</span>
             </a>
           ))}
         </div>
 
-        <div style={{
-          padding: "12px 18px", borderTop: "1px solid #f1f5f9", flexShrink: 0,
-        }}>
-          <div style={{ fontSize: "10px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: ".05em" }}>
+        {/* ── Role badge ── */}
+        <div style={{ padding: "10px 18px 14px", flexShrink: 0 }}>
+          <span style={{
+            fontSize: "9.5px", fontWeight: "700", color: "#94a3b8",
+            textTransform: "uppercase", letterSpacing: ".07em",
+          }}>
             Role: {userRole}
-          </div>
+          </span>
         </div>
       </aside>
     </>

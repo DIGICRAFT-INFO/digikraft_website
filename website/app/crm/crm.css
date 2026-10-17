@@ -23,7 +23,7 @@ body, .crm-root {
 
 /* ── Sidebar ── */
 .crm-sidebar {
-  width: 220px;
+  width: 230px;
   height: 100vh;
   background: #fff;
   border-right: 1px solid #e2e8f0;
@@ -100,9 +100,12 @@ body, .crm-root {
 .crm-page-title  { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0; }
 .crm-page-sub    { font-size: 13px; color: #64748b; margin: 4px 0 0; }
 
-/* ── Stat Cards ── */
-.crm-stats-grid  { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 16px; margin-bottom: 28px; }
-.crm-stat-card   { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+/* ── Stats grid — default: auto-fill ── */
+.crm-stats-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(180px,1fr)); gap: 14px; margin-bottom: 28px; }
+
+/* ── Stat card ── */
+.crm-stat-card   { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 14px; transition: all .2s; }
+.crm-stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.07); }
 .crm-stat-top    { display: flex; justify-content: space-between; align-items: flex-start; }
 .crm-stat-label  { font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 4px; }
 .crm-stat-value  { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
@@ -220,8 +223,8 @@ body, .crm-root {
   .crm-sidebar   { position: fixed !important; z-index: 100; }
   .crm-content   { padding: 16px; }
 
-  /* Stats grid — 2 columns */
-  .crm-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  /* Stats grid — 2 columns on tablet */
+  .crm-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
   /* Modal — full screen feel */
   .crm-modal {
@@ -242,7 +245,7 @@ body, .crm-root {
   .crm-search-bar input { width: 100%; }
 
   /* Header */
-  .crm-header { padding: 0 16px; }
+  .crm-header { padding: 0 14px 0 10px; }
   .crm-header-title { font-size: 13px; }
   .crm-user-name { max-width: 80px; }
 
@@ -250,7 +253,7 @@ body, .crm-root {
   .crm-page-header { flex-direction: column; align-items: flex-start; }
   .crm-page-title { font-size: 18px; }
 
-  /* Welcome banner clock — hide on very small */
+  /* Welcome banner clock — hide on tablet */
   .crm-clock { display: none; }
 }
 
