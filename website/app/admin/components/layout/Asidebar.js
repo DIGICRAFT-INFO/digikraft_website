@@ -233,67 +233,72 @@ const Asidebar = () => {
         </select>
       </div>
 
-      {/* ── Main Nav ── */}
-      <p className="section-label">Main</p>
-      <nav className="nav-menu">
-        {mainMenuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.link;
-          return (
-            <Link
-              key={item.id}
-              href={item.link}
-              className={`nav-link ${isActive ? "active" : "inactive"}`}
-            >
-              <div className="icon-wrapper">
-                <Icon className="nav-icon" size={17} />
-              </div>
-              <span className="link-text">{item.name}</span>
+      {/* ── Scrollable nav area ── */}
+      <div className="nav-scroll-area">
+
+        {/* ── Main Nav ── */}
+        <p className="section-label">Main</p>
+        <nav className="nav-menu">
+          {mainMenuItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = pathname === item.link;
+            return (
+              <Link
+                key={item.id}
+                href={item.link}
+                className={`nav-link ${isActive ? "active" : "inactive"}`}
+              >
+                <div className="icon-wrapper">
+                  <Icon className="nav-icon" size={17} />
+                </div>
+                <span className="link-text">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* ── Bottom Nav ── */}
+        {bottomMenuItems.length > 0 && (
+          <>
+            <div className="sidebar-spacer" />
+            <hr className="sidebar-divider" />
+            <p className="section-label" style={{ paddingTop: "4px" }}>System</p>
+
+            <nav className="nav-menu bottom-nav">
+              {bottomMenuItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.link;
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.link}
+                    className={`nav-link ${isActive ? "active" : "inactive"}`}
+                  >
+                    <div className="icon-wrapper">
+                      <Icon className="nav-icon" size={17} />
+                    </div>
+                    <span className="link-text">{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </>
+        )}
+
+        {/* CRM Portal link (visible to superadmin) */}
+        {userRole === "superadmin" && (
+          <div style={{ padding: "10px 10px 0" }}>
+            <Link href="/crm/login" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", fontSize: "12.5px", fontWeight: "600", background: "linear-gradient(135deg,#14532d,#166534)", color: "#fff", marginBottom: "6px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Open CRM Portal
             </Link>
-          );
-        })}
-      </nav>
+          </div>
+        )}
 
-      {/* ── Bottom Nav ── */}
-      {bottomMenuItems.length > 0 && (
-        <>
-          <div className="sidebar-spacer" />
-          <hr className="sidebar-divider" />
-          <p className="section-label" style={{ paddingTop: "4px" }}>System</p>
+      </div>{/* end nav-scroll-area */}
 
-          <nav className="nav-menu bottom-nav">
-            {bottomMenuItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.link;
-              return (
-                <Link
-                  key={item.id}
-                  href={item.link}
-                  className={`nav-link ${isActive ? "active" : "inactive"}`}
-                >
-                  <div className="icon-wrapper">
-                    <Icon className="nav-icon" size={17} />
-                  </div>
-                  <span className="link-text">{item.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
-        </>
-      )}
-
-      {/* Role indicator */}
-      {/* CRM Portal link (visible to superadmin) */}
-      {userRole === "superadmin" && (
-        <div style={{ padding: "10px 10px 0" }}>
-          <Link href="/crm/login" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 12px", borderRadius: "8px", textDecoration: "none", fontSize: "12.5px", fontWeight: "600", background: "linear-gradient(135deg,#14532d,#166534)", color: "#fff", marginBottom: "6px" }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            Open CRM Portal
-          </Link>
-        </div>
-      )}
-
-      <div style={{ padding: "12px 20px", marginTop: "auto", borderTop: "1px solid #f1f5f9" }}>
+      {/* ── Fixed bottom: role indicator ── */}
+      <div style={{ padding: "12px 20px", borderTop: "1px solid #f1f5f9", flexShrink: 0 }}>
         <span style={{ fontSize: "10px", fontWeight: "700", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.05em" }}>
           Role: {userRole}
         </span>

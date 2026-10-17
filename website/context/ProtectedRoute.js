@@ -5,29 +5,31 @@ import { useRouter } from 'next/navigation';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
+  const [status, setStatus] = useState('checking'); // 'checking' | 'allowed' | 'denied'
   const [accessRevoked, setAccessRevoked] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-
     const token = localStorage.getItem('token');
     const role  = localStorage.getItem('role');
 
-    // No token → redirect to login
+    // No token → redirect to login immediately
     if (!token) {
-      router.push('/admin/login');
+      router.replace('/admin/login');
+      setStatus('denied');
       return;
     }
 
     // Role restriction check
     if (allowedRoles && role && !allowedRoles.includes(role)) {
-      router.push('/unauthorized');
+      router.replace('/unauthorized');
+      setStatus('denied');
       return;
     }
 
-    // ✅ Background verify — silently updates role if changed by superadmin
-    // Does NOT block rendering — content shows immediately
+    // Token exists → allow content to show
+    setStatus('allowed');
+
+    // ✅ Background verify — silently revokes if token is invalid
     const verifyInBackground = async () => {
       try {
         const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend.digikraftsocial.com';
@@ -35,21 +37,21 @@ export default function ProtectedRoute({ children, allowedRoles }) {
           headers: { Authorization: `Bearer ${token}` },
           signal: AbortSignal.timeout(6000),
         });
+
         if (!res.ok) {
-          // 401/403 = token invalid → revoke
           if (res.status === 401 || res.status === 403) {
-            setAccessRevoked(true);
+            // Token invalid → revoke session
             localStorage.removeItem('token');
             localStorage.removeItem('role');
             localStorage.removeItem('userName');
             localStorage.removeItem('userEmail');
+            setAccessRevoked(true);
           }
-          // Other errors (network, 500) = keep session
           return;
         }
+
         const data = await res.json();
         if (data?.valid) {
-          // Update role/name if changed
           if (data.role && data.role !== role) {
             localStorage.setItem('role', data.role);
           }
@@ -58,37 +60,41 @@ export default function ProtectedRoute({ children, allowedRoles }) {
           }
         }
       } catch {
-        // Timeout/network error → keep session alive silently
+        // Timeout / network error → keep session alive silently
       }
     };
 
     verifyInBackground();
-    const interval = setInterval(verifyInBackground, 60000); // re-verify every 60s
+    const interval = setInterval(verifyInBackground, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Access revoked screen
+  // ── Access revoked (token rejected by server) ──
   if (accessRevoked) {
     return (
       <div style={{ minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'#fef2f2',padding:'20px' }}>
         <div style={{ maxWidth:'400px',textAlign:'center',background:'#fff',borderRadius:'16px',padding:'36px',boxShadow:'0 4px 24px rgba(0,0,0,0.08)',border:'1px solid #fecaca' }}>
           <div style={{ fontSize:'44px',marginBottom:'14px' }}>🚫</div>
-          <h2 style={{ fontSize:'20px',fontWeight:'800',color:'#991b1b',margin:'0 0 8px' }}>Access Revoked</h2>
+          <h2 style={{ fontSize:'20px',fontWeight:'800',color:'#991b1b',margin:'0 0 8px' }}>Session Expired</h2>
           <p style={{ color:'#6b7280',fontSize:'13px',lineHeight:'1.6',marginBottom:'20px' }}>
-            Your session has been revoked. Please contact the administrator.
+            Your session has expired or was revoked. Please log in again.
           </p>
           <button
-            onClick={() => { router.push('/admin/login'); }}
+            onClick={() => { router.replace('/admin/login'); }}
             style={{ background:'#dc2626',color:'#fff',border:'none',padding:'10px 22px',borderRadius:'8px',fontSize:'13px',fontWeight:'600',cursor:'pointer' }}>
-            Go to Login
+            Back to Login
           </button>
         </div>
       </div>
     );
   }
 
-  // ✅ Don't block! Show content if mounted (token check above will redirect if no token)
-  if (!mounted) return null;
+  // ── Still checking (first render before useEffect runs) ──
+  if (status === 'checking') return null;
 
+  // ── Denied → null (router.replace already called) ──
+  if (status === 'denied') return null;
+
+  // ── Allowed ──
   return <>{children}</>;
 }

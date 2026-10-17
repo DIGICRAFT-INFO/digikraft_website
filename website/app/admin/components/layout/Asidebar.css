@@ -11,7 +11,7 @@
   flex-direction: column;
   padding: 0;
   font-family: 'Inter', -apple-system, sans-serif;
-  overflow: hidden;
+  overflow: hidden; /* outer container stays fixed */
 }
 
 .logo-section {
@@ -77,12 +77,37 @@
   color: #374151;
 }
 
+/* ── Scrollable middle section ── */
+.nav-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #d1fae5 transparent;
+}
+
+.nav-scroll-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-scroll-area::-webkit-scrollbar-thumb {
+  background-color: #d1fae5;
+  border-radius: 4px;
+}
+
 .nav-menu {
   display: flex;
   flex-direction: column;
   gap: 2px;
   padding: 0 10px;
-  flex-shrink: 0;
 }
 
 .nav-link {
@@ -146,7 +171,7 @@
   flex-shrink: 0;
 }
 
-.sidebar-spacer { flex: 1; }
+.sidebar-spacer { flex: 1; min-height: 16px; }
 
 .sidebar-divider {
   border: none;
@@ -156,8 +181,7 @@
 }
 
 .bottom-nav {
-  flex-shrink: 0;
-  margin-bottom: 30px;
+  margin-bottom: 8px;
 }
 
 .profile-section {
