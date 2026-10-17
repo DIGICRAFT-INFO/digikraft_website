@@ -178,14 +178,8 @@ const Dashboard = () => {
 
   if (!mounted) return null;
 
-  if (loading) {
-    return (
-      <div className="dashboard-loading">
-        <Loader2 size={44} className="spinner" />
-        <p>Syncing live data...</p>
-      </div>
-    );
-  }
+  // ✅ Don't block entire page — show content with subtle loading indicator
+  // if (loading) { ... } removed — loading spinner was blocking all content
 
   return (
     <div className="dashboard">

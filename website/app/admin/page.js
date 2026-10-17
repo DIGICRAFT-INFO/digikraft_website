@@ -34,7 +34,7 @@ const Dashboard = () => {
     projects: 0,
   });
 
-  const API = "https://backend.digikraftsocial.com/api";
+  const API = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api";
 
   useEffect(() => {
     setMounted(true);
@@ -187,7 +187,7 @@ const Dashboard = () => {
                         <div className="post-info">
                           {post.image ? (
                             <img
-                              src={`https://backend.digikraftsocial.com/uploads/${post.image}`}
+                            src={`${process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com"}/uploads/${post.image}`}
                               alt={post.title}
                             />
                           ) : (

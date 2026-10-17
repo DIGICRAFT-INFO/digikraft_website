@@ -30,7 +30,7 @@ export default function Contact() {
 
     try {
       const response = await fetch(
-        "https://backend.digikraftsocial.com/api/enquiry/send",
+        `${process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com"}/api/enquiry/send`,
         {
           method: "POST",
           headers: {

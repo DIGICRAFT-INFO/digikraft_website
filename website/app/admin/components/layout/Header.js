@@ -18,59 +18,64 @@ const Header = () => {
     email: "Loading..."
   });
 
-  // Local Backend URL endpoint configuration
-  const API_URL = "https://backend.digikraftsocial.com/api/enquiry/send";
+  // Local Backend URL endpoint configuration - use env var
+  const API_URL = (process.env.NEXT_PUBLIC_BACKEND_URL || "https://backend.digikraftsocial.com") + "/api/enquiry/send";
 
   const checkNewEnquiries = async () => {
     try {
-      const response = await fetch(API_URL);
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(API_URL, { signal: controller.signal });
+      clearTimeout(tid);
       if (!response.ok) return;
       const data = await response.json();
       const enquiries = Array.isArray(data) ? data : data.data || data.enquiries || [];
-      
-      // LocalStorage se un messages ki ID nikaalein jise user dekh chuka hai
       const readMessages = JSON.parse(localStorage.getItem("readEnquiries") || "[]");
-      
-      // Filter karein jo IDs abhi tak read list me nahi hain
       const unreadEnquiries = enquiries.filter(
         (item) => !readMessages.includes(item._id || item.id)
       );
-      
       setUnreadCount(unreadEnquiries.length);
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      // Ignore timeout/network errors silently
     }
   };
 
   useEffect(() => {
     setIsMounted(true);
-    
-    const storedName = localStorage.getItem('userName') || 'User';
-    const storedRole = localStorage.getItem('role') || 'User';
-    const storedEmail = localStorage.getItem('userEmail') || 'No Email Provided';
-    const formattedRole = storedRole.charAt(0).toUpperCase() + storedRole.slice(1);
 
-    setUserInfo({
-      name: storedName,
-      role: formattedRole,
-      email: storedEmail
-    });
-
-    checkNewEnquiries();
-
-    // Har 10 seconds me background me auto check karein
-    const interval = setInterval(checkNewEnquiries, 10000);
-
-    // Jab EnquiryCMS page par click karke message dekhein, tab turant badge update karne ke liye listener
-    const handleStorageSync = () => {
-      checkNewEnquiries();
+    const loadUserInfo = () => {
+      const storedName  = localStorage.getItem('userName')  || '';
+      const storedRole  = localStorage.getItem('role')       || '';
+      const storedEmail = localStorage.getItem('userEmail')  || '';
+      if (storedName || storedRole) {
+        setUserInfo({
+          name:  storedName  || 'Admin',
+          role:  storedRole  ? storedRole.charAt(0).toUpperCase() + storedRole.slice(1) : 'Admin',
+          email: storedEmail || 'admin@digikraftsocial.com',
+        });
+      }
     };
 
+    loadUserInfo();
+
+    // Poll every 300ms for 3s in case ProtectedRoute updates localStorage
+    let attempts = 0;
+    const poll = setInterval(() => {
+      loadUserInfo();
+      attempts++;
+      if (attempts >= 10) clearInterval(poll);
+    }, 300);
+
+    checkNewEnquiries();
+    const interval = setInterval(checkNewEnquiries, 30000); // reduced to 30s
+
+    const handleStorageSync = () => { checkNewEnquiries(); loadUserInfo(); };
     window.addEventListener("storage", handleStorageSync);
     window.addEventListener("cms_navigated", handleStorageSync);
 
     return () => {
       clearInterval(interval);
+      clearInterval(poll);
       window.removeEventListener("storage", handleStorageSync);
       window.removeEventListener("cms_navigated", handleStorageSync);
     };
