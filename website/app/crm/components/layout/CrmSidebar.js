@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Receipt,
   CreditCard, Package, UserCheck, MessageSquare,
-  History, Bell, Settings, X, TrendingUp,
+  History, Bell, Settings, X, TrendingUp, PhoneCall,
 } from "lucide-react";
 
 const NAV_SECTIONS = [
@@ -25,6 +25,7 @@ const NAV_SECTIONS = [
       { id:"quotations", label:"Quotations",       href:"/crm/dashboard/quotations",    icon:Receipt,         roles:["owner","manager"] },
       { id:"invoices",   label:"Invoices",         href:"/crm/dashboard/invoices",      icon:FileText,        roles:["owner","manager","accountant"] },
       { id:"payments",   label:"Payments",         href:"/crm/dashboard/payments",      icon:CreditCard,      roles:["owner","manager","accountant"] },
+      { id:"followups",  label:"Follow-Ups",       href:"/crm/dashboard/followups",     icon:PhoneCall,       roles:["owner","manager","executive"] },
     ],
   },
   {

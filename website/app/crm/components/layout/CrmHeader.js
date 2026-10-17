@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   "/crm/dashboard/history":        { title: "Activity Log",     sub: "Full audit trail" },
   "/crm/dashboard/notifications":  { title: "Notifications",    sub: "Alerts & updates" },
   "/crm/dashboard/settings":       { title: "Settings",         sub: "Company, tax & billing config" },
+  "/crm/dashboard/followups":      { title: "Follow-Ups",       sub: "Track every client interaction" },
 };
 
 function getPageMeta(pathname) {
