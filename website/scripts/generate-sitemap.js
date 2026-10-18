@@ -1,37 +1,51 @@
-const fs = require("fs");
-const { SitemapStream, streamToPromise } = require("sitemap");
+/**
+ * generate-sitemap.js — runs after `next build`
+ * Overwrites public/sitemap.xml with latest routes.
+ * Uses only Node.js built-ins (fs, path) — no extra dependencies.
+ */
+const fs   = require("fs");
 const path = require("path");
 
-const baseUrl = "https://www.digikraftsocial.com";
+const BASE_URL = "https://www.digikraftsocial.com";
 
-async function generateSitemap() {
-  const smStream = new SitemapStream({ hostname: baseUrl });
+const pages = [
+  { url: "/",               changefreq: "weekly",  priority: "1.0" },
+  { url: "/about",          changefreq: "monthly", priority: "0.9" },
+  { url: "/service",        changefreq: "weekly",  priority: "0.9" },
+  { url: "/contact",        changefreq: "monthly", priority: "0.8" },
+  { url: "/portfolio",      changefreq: "weekly",  priority: "0.85" },
+  { url: "/blog",           changefreq: "weekly",  priority: "0.8" },
+  { url: "/blog-2",         changefreq: "weekly",  priority: "0.7" },
+  { url: "/careers",        changefreq: "weekly",  priority: "0.75" },
+  { url: "/pricing",        changefreq: "monthly", priority: "0.8" },
+  { url: "/feature",        changefreq: "monthly", priority: "0.75" },
+  { url: "/feature-2",      changefreq: "monthly", priority: "0.7" },
+  { url: "/feature-3",      changefreq: "monthly", priority: "0.7" },
+  { url: "/integration",    changefreq: "monthly", priority: "0.7" },
+  { url: "/seo",            changefreq: "monthly", priority: "0.75" },
+  { url: "/qr",             changefreq: "monthly", priority: "0.6" },
+  { url: "/help",           changefreq: "monthly", priority: "0.6" },
+  { url: "/privacy-policy", changefreq: "yearly",  priority: "0.4" },
+  { url: "/term-conditions",changefreq: "yearly",  priority: "0.4" },
+];
 
-  // Static pages you want to include
-  const pages = [
-    "", // Homepage
-    "/about",
-    "/service",
-    "/contact",
-    "/blog",
-    "/feature",
-    "/seo",
-    "/qr",
+const urls = pages.map(p => `
+  <url>
+    <loc>${BASE_URL}${p.url}</loc>
+    <changefreq>${p.changefreq}</changefreq>
+    <priority>${p.priority}</priority>
+  </url>`).join("");
 
-    // Add more static or dynamic routes here
-  ];
+const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
 
-  pages.forEach((page) => {
-    smStream.write({ url: page, changefreq: "weekly", priority: 0.8 });
-  });
-
-  smStream.end();
-
-  const sitemap = await streamToPromise(smStream).then((sm) => sm.toString());
-
-  // Save to public/sitemap.xml
-  fs.writeFileSync(path.join(__dirname, "../public/sitemap.xml"), sitemap);
-  console.log("✅ Sitemap successfully created at public/sitemap.xml");
+try {
+  const outPath = path.join(__dirname, "../public/sitemap.xml");
+  fs.writeFileSync(outPath, xml, "utf8");
+  console.log("✅ sitemap.xml generated at public/sitemap.xml");
+} catch (err) {
+  // Non-fatal — don't break the build
+  console.warn("⚠️  Could not write sitemap.xml:", err.message);
 }
-
-generateSitemap();
