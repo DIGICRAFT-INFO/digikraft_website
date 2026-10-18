@@ -1,30 +1,35 @@
 // components/GoogleAnalytics.js
-// GA4 tracking with Next.js App Router — auto-tracks page changes
+// GA4 tracking with Next.js App Router
+// useSearchParams MUST be inside a Suspense boundary to avoid build errors
 "use client";
 
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 
 const GA_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || "G-LF7XKHQLQH";
 
-// Send a pageview hit to GA4
 function pageview(url) {
   if (typeof window === "undefined" || !window.gtag) return;
   window.gtag("config", GA_ID, { page_path: url });
 }
 
-export default function GoogleAnalytics() {
+// ── Inner component: uses useSearchParams — must be inside <Suspense> ──────────
+function GATracker() {
   const pathname     = usePathname();
   const searchParams = useSearchParams();
 
-  // Fire pageview on every route change (Next.js App Router)
   useEffect(() => {
     if (!GA_ID) return;
     const url = pathname + (searchParams?.toString() ? "?" + searchParams.toString() : "");
     pageview(url);
   }, [pathname, searchParams]);
 
+  return null; // renders nothing, just fires the pageview effect
+}
+
+// ── Exported component: wraps GATracker in Suspense ───────────────────────────
+export default function GoogleAnalytics() {
   if (!GA_ID) return null;
 
   return (
@@ -34,7 +39,7 @@ export default function GoogleAnalytics() {
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
         strategy="afterInteractive"
       />
-      {/* Initialise dataLayer and configure GA4 */}
+      {/* Initialise GA4 */}
       <Script id="google-analytics-init" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
@@ -47,6 +52,10 @@ export default function GoogleAnalytics() {
           });
         `}
       </Script>
+      {/* Suspense required because useSearchParams() suspends during SSR/prerender */}
+      <Suspense fallback={null}>
+        <GATracker />
+      </Suspense>
     </>
   );
 }
