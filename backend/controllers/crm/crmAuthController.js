@@ -8,8 +8,8 @@ const LOCK_MINUTES  = 30;
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const signToken = (user) =>
   jwt.sign(
-    { id: user._id, role: user.role, portal: 'crm' },
-    process.env.JWT_CRM_SECRET || process.env.JWT_SECRET,  // ✅ portal-specific secret
+    { id: user._id, role: user.role, portal: 'crm', tv: user.token_version || 0 },
+    process.env.JWT_CRM_SECRET || process.env.JWT_SECRET,
     { expiresIn: '8h' }
   );
 
@@ -229,4 +229,24 @@ exports.updateUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user.toJSON());
   } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ── Logout (ALL devices) ──────────────────────────────────────────────────────
+// Increments token_version → ALL previously issued JWTs are instantly invalid
+// Works across every device/browser simultaneously
+exports.logout = async (req, res) => {
+  try {
+    await CrmUser.updateOne(
+      { _id: req.crmUser._id },
+      { $inc: { token_version: 1 } }
+    );
+    await logHistory(
+      req.crmUser._id, req.crmUser.full_name,
+      'logout', 'user', req.crmUser._id, req.crmUser.full_name,
+      'Logged out — all devices invalidated'
+    );
+    res.json({ message: 'Logged out from all devices successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Logout failed' });
+  }
 };

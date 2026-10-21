@@ -35,6 +35,10 @@ const hrmAuth = async (req, res, next) => {
     if (user.locked_until && new Date(user.locked_until) > new Date())
       return res.status(423).json({ message: 'Account temporarily locked' });
 
+    // ✅ Token version check — logout all devices
+    if (decoded.tv !== undefined && decoded.tv !== (user.token_version || 0))
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
+
     req.hrmUser  = user;
     req.clientIP = getIP(req);
     next();

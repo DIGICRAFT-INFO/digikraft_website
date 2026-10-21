@@ -34,6 +34,8 @@ const crmUserSchema = new mongoose.Schema(
     login_attempts: { type: Number, default: 0 },
     locked_until:   { type: Date,   default: null },
     last_login:     { type: Date,   default: null },
+    // ✅ Token version — increment on logout to invalidate ALL active sessions
+    token_version:  { type: Number, default: 0 },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

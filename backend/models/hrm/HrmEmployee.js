@@ -72,6 +72,7 @@ const hrmEmployeeSchema = new mongoose.Schema({
   last_login:     { type: Date, default: null },
   login_attempts: { type: Number, default: 0 },
   locked_until:   { type: Date, default: null },
+  token_version:  { type: Number, default: 0 },   // ✅ logout all devices
 
   // ── Leave balances (embedded, updated when leave approved) ─────────────────
   leave_balance: {

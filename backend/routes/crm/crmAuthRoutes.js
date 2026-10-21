@@ -11,6 +11,7 @@ router.get('/me', crmAuth, ctrl.me);
 router.patch('/me', crmAuth, ctrl.updateProfile);
 router.post('/me/change-password', crmAuth, ctrl.changePassword);
 router.get('/verify', crmAuth, ctrl.verify);
+router.post('/logout', crmAuth, ctrl.logout);   // ✅ logout ALL devices
 
 // ── Manager / Owner ───────────────────────────────────────────────────────────
 router.get('/pending-users', crmAuth, crmManagerOrAbove, ctrl.getPendingUsers);

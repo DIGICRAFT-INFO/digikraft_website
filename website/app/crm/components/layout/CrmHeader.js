@@ -62,7 +62,11 @@ export default function CrmHeader({ onMenuToggle, sidebarSide, onSidebarSideTogg
     return () => document.removeEventListener("mousedown", fn);
   }, []);
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // ✅ Call backend logout — invalidates ALL devices/sessions
+      await CRM_API.post("/auth/logout");
+    } catch {}
     localStorage.removeItem("crm_token");
     localStorage.removeItem("crm_user");
     router.replace("/crm/login");

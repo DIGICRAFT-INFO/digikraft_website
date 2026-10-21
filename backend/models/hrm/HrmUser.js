@@ -27,6 +27,7 @@ const hrmUserSchema = new mongoose.Schema({
   last_login:     { type: Date, default: null },
   login_attempts: { type: Number, default: 0 },   // brute-force protection
   locked_until:   { type: Date, default: null },
+  token_version:  { type: Number, default: 0 },   // ✅ increment on logout = all devices
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
   collection: 'hrm_users',

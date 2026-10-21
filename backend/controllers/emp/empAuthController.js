@@ -5,7 +5,7 @@ const HrmSettings = require('../../models/hrm/HrmSettings');
 
 const signToken = (emp) =>
   jwt.sign(
-    { id: emp._id, portal: 'emp' },
+    { id: emp._id, portal: 'emp', tv: emp.token_version || 0 },
     process.env.JWT_EMP_SECRET || process.env.JWT_SECRET,  // ✅ portal-specific secret
     { expiresIn: '12h' }
   );
@@ -141,4 +141,15 @@ exports.deleteProfileImage = async (req, res) => {
     await HrmEmployee.findByIdAndUpdate(req.empUser._id, { profile_image: null });
     res.json({ message: 'Profile photo removed' });
   } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ── Logout all devices ────────────────────────────────────────────────────────
+exports.logoutAll = async (req, res) => {
+  try {
+    await HrmEmployee.updateOne({ _id: req.empUser._id }, { $inc: { token_version: 1 } });
+    await log(req.empUser._id, req.empUser.full_name, 'logout', 'Logged out — all devices invalidated', req.ip);
+    res.json({ message: 'Logged out from all devices successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Logout failed' });
+  }
 };

@@ -18,7 +18,7 @@ router.get('/me',               hrmAuth, ctrl.me);
 router.patch('/me',             hrmAuth, ctrl.updateProfile);
 router.post('/me/change-password', hrmAuth, ctrl.changePassword);
 router.get('/verify',           hrmAuth, ctrl.verify);
-router.post('/logout',          hrmAuth, ctrl.logout);
+router.post('/logout',          hrmAuth, ctrl.logoutAll);  // ✅ all devices
 
 // Manager+ — user management
 router.get('/pending-users',          hrmAuth, hrmManagerOrAbove, ctrl.getPendingUsers);

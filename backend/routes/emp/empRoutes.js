@@ -22,6 +22,7 @@ router.post('/auth/login',  loginLimiter, authCtrl.login);
 // ── Protected ──────────────────────────────────────────────────────────────────
 router.get('/auth/me',              empAuth, authCtrl.me);
 router.get('/auth/verify',          empAuth, authCtrl.verify);
+router.post('/auth/logout',         empAuth, authCtrl.logoutAll);  // ✅ all devices
 router.post('/auth/me/change-password', empAuth, authCtrl.changePassword);
 router.patch('/auth/profile',       empAuth, authCtrl.updateProfile);
 

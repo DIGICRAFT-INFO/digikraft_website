@@ -40,6 +40,10 @@ const empAuth = async (req, res, next) => {
     if (employee.locked_until && new Date(employee.locked_until) > new Date())
       return res.status(423).json({ message: 'Account temporarily locked. Try later.' });
 
+    // ✅ Token version check — logout all devices
+    if (decoded.tv !== undefined && decoded.tv !== (employee.token_version || 0))
+      return res.status(401).json({ message: 'Session expired. Please log in again.' });
+
     req.empUser  = employee;
     req.clientIP = getIP(req);
     next();

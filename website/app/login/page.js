@@ -95,7 +95,21 @@ export default function LoginHub() {
 
       {/* Logo + Title */}
       <div style={{ textAlign:"center",marginBottom:36,position:"relative",zIndex:1 }}>
-        <div style={{ display:"inline-flex",alignItems:"center",justifyContent:"center",width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#7c3aed,#2563eb)",marginBottom:14,boxShadow:"0 6px 24px rgba(124,58,237,.4)" }}>
+        {/* DigiKraft Social Logo */}
+        <img
+          src="/assets/imgs/template/logo.png"
+          alt="DigiKraft Social"
+          style={{ height:44, objectFit:"contain", marginBottom:14, display:"block", margin:"0 auto 14px",
+            filter:"brightness(0) invert(1)", /* white version on dark bg */
+          }}
+          onError={e => {
+            // Fallback to icon if logo fails
+            e.target.style.display = "none";
+            document.getElementById("login-hub-icon")?.style.setProperty("display","inline-flex");
+          }}
+        />
+        {/* Fallback icon (hidden by default) */}
+        <div id="login-hub-icon" style={{ display:"none",alignItems:"center",justifyContent:"center",width:52,height:52,borderRadius:14,background:"linear-gradient(135deg,#7c3aed,#2563eb)",marginBottom:14,boxShadow:"0 6px 24px rgba(124,58,237,.4)",margin:"0 auto 14px" }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2">
             <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"/>
             <line x1="12" y1="2" x2="12" y2="22"/>

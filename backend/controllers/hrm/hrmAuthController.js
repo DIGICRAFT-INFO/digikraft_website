@@ -8,7 +8,7 @@ const HrmSettings  = require('../../models/hrm/HrmSettings');
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const signToken = (user) =>
   jwt.sign(
-    { id: user._id, role: user.role, portal: 'hrm' },
+    { id: user._id, role: user.role, portal: 'hrm', tv: user.token_version || 0 },
     process.env.JWT_HRM_SECRET || process.env.JWT_SECRET,  // ✅ portal-specific secret
     { expiresIn: '8h' }
   );
@@ -202,4 +202,15 @@ exports.updateUser = async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user.toJSON());
   } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ── Logout all devices ────────────────────────────────────────────────────────
+exports.logoutAll = async (req, res) => {
+  try {
+    await HrmUser.updateOne({ _id: req.hrmUser._id }, { $inc: { token_version: 1 } });
+    await log(req.hrmUser._id, req.hrmUser.full_name, 'logout', 'user', req.hrmUser._id, req.hrmUser.full_name, 'Logged out — all devices invalidated');
+    res.json({ message: 'Logged out from all devices successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Logout failed' });
+  }
 };
