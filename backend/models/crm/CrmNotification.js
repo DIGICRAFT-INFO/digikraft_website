@@ -18,6 +18,7 @@ const crmNotificationSchema = new mongoose.Schema(
         'portfolio_created',
         'enquiry_received',
         'user_created', 'access_granted', 'access_revoked',
+        'followup_created', 'followup_won', 'followup_lost',
       ],
       required: true,
     },
