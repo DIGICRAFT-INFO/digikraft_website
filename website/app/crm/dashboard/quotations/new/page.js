@@ -1,11 +1,17 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Save, Plus, X, Zap } from "lucide-react";
+import { ArrowLeft, Save, Plus, X, Zap, UserPlus, ChevronDown } from "lucide-react";
 import CRM_API from "@/utils/crmApi";
 
 const EMPTY_ITEM = { description:"", quantity:1, unit_price:0, total_price:0 };
 const fmt = n => `₹${Number(n||0).toLocaleString("en-IN")}`;
+
+const CLIENT_TYPES  = ["","startup","sme","enterprise","ecommerce","agency","personal","ngo","other"];
+const LEAD_SOURCES  = ["","instagram","facebook","google","linkedin","website","referral","cold_outreach","event","other"];
+const INDIA_STATES  = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Jammu and Kashmir","Ladakh","Chandigarh","Puducherry","Other"];
+
+const EMPTY_CLIENT = { full_name:"", company_name:"", email:"", phone:"", billing_address:"", city:"", state:"", gstin:"", website:"", client_type:"", lead_source:"", social_handle:"", notes:"" };
 
 export default function NewQuotationPage() {
   const router    = useRouter();
@@ -13,19 +19,25 @@ export default function NewQuotationPage() {
   const clientId  = params.get("client")  || "";
   const projectId = params.get("project") || "";
 
-  const [projects, setProjects] = useState([]);
-  const [services, setServices] = useState([]);
-  const [items,    setItems]    = useState([{ ...EMPTY_ITEM }]);
+  const [projects,    setProjects]    = useState([]);
+  const [services,    setServices]    = useState([]);
+  const [items,       setItems]       = useState([{ ...EMPTY_ITEM }]);
+  const [newClient,   setNewClient]   = useState({ ...EMPTY_CLIENT });
+  const [createdClient, setCreatedClient] = useState(null); // after inline client creation
+  const [saving,      setSaving]      = useState(false);
+  const [savingClient,setSavingClient]= useState(false);
+  const [clientDone,  setClientDone]  = useState(false);
+  const [err,         setErr]         = useState("");
+  const [clientErr,   setClientErr]   = useState("");
+
   const [form, setForm] = useState({
     project: projectId, status:"draft", valid_until:"",
     discount_type:"fixed", discount_value:0,
     cgst_rate:9, sgst_rate:9, igst_rate:0,
     hsn_sac:"998319", place_of_supply:"Chhattisgarh", notes:"",
-    _projectMode: projectId ? "select" : "select",
+    _projectMode: "select",
     client_name_direct: "",
   });
-  const [saving, setSaving] = useState(false);
-  const [err,    setErr]    = useState("");
 
   useEffect(() => {
     const q = clientId ? `/projects?client=${clientId}` : "/projects";
@@ -46,7 +58,23 @@ export default function NewQuotationPage() {
       .catch(()=>{});
   }, [clientId]);
 
-  // ✅ Add service as line item
+  // ── Save inline new client ──────────────────────────────────────────────────
+  const handleCreateClient = async () => {
+    if (!newClient.full_name?.trim()) { setClientErr("Full name is required"); return; }
+    if (!newClient.phone?.trim())     { setClientErr("Phone is required"); return; }
+    if (!newClient.billing_address?.trim()) { setClientErr("Billing address is required"); return; }
+    setSavingClient(true); setClientErr("");
+    try {
+      const { data } = await CRM_API.post("/clients", newClient);
+      setCreatedClient(data);
+      setClientDone(true);
+      // Link the new client to quotation via client_name_direct
+      setForm(p => ({ ...p, client_name_direct: data.full_name + (data.company_name ? ` (${data.company_name})` : "") }));
+    } catch (ex) { setClientErr(ex.response?.data?.message || "Client creation failed"); }
+    finally { setSavingClient(false); }
+  };
+
+  // ── Add service as line item ─────────────────────────────────────────────────
   const addServiceAsItem = (svc) => {
     const newItem = {
       description: svc.name + (svc.description ? ` — ${svc.description}` : ""),
@@ -72,6 +100,10 @@ export default function NewQuotationPage() {
     e.preventDefault(); setSaving(true); setErr("");
     try {
       const { _projectMode, ...payload } = form;
+      // When in "name" mode, ensure project is null (not empty string which causes CastError)
+      if (_projectMode === "name" || !payload.project) {
+        payload.project = null;
+      }
       await CRM_API.post("/quotations", { ...payload, items: items.filter(i=>i.description) });
       if (clientId) router.push(`/crm/dashboard/clients/${clientId}`);
       else          router.push("/crm/dashboard/quotations");
@@ -109,31 +141,143 @@ export default function NewQuotationPage() {
 
           {/* Project + Valid Until */}
           <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:16 }}>
-          {/* Project field — Select existing OR type client name */}
+          {/* Project field — Select existing | Type name | Add new client */}
           <div>
             <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6 }}>
               <label style={lbl}>Project / Client <span style={{fontSize:11,color:"#94a3b8",fontWeight:400}}>(optional)</span></label>
               <div style={{ display:"flex",gap:2,background:"#f1f5f9",borderRadius:8,padding:2 }}>
-                {["select","name"].map(m=>(
-                  <button key={m} type="button" onClick={()=>setForm(p=>({...p,_projectMode:m,project:"",client_name_direct:""}))}
-                    style={{ padding:"4px 12px",borderRadius:6,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",background:form._projectMode===m?"#fff":"transparent",color:form._projectMode===m?"#0f172a":"#64748b",boxShadow:form._projectMode===m?"0 1px 4px rgba(0,0,0,.1)":"none" }}>
-                    {m==="select"?"Select Project":"Enter Name"}
+                {[
+                  { k:"select", label:"Select" },
+                  { k:"name",   label:"Enter Name" },
+                  { k:"new_client", label:"+ New Client", color:"#7c3aed" },
+                ].map(m=>(
+                  <button key={m.k} type="button"
+                    onClick={()=>{ setForm(p=>({...p,_projectMode:m.k,project:"",client_name_direct:""})); setClientDone(false); setClientErr(""); }}
+                    style={{ padding:"4px 10px",borderRadius:6,border:"none",fontSize:11,fontWeight:700,cursor:"pointer",
+                      background:form._projectMode===m.k?(m.color||"#fff"):"transparent",
+                      color:form._projectMode===m.k?(m.color?"#fff":"#0f172a"):"#64748b",
+                      boxShadow:form._projectMode===m.k?"0 1px 4px rgba(0,0,0,.1)":"none" }}>
+                    {m.label}
                   </button>
                 ))}
               </div>
             </div>
-            {(!form._projectMode || form._projectMode==="select") ? (
+
+            {/* Select mode */}
+            {form._projectMode==="select" && (
               <select value={form.project} onChange={e=>setForm(p=>({...p,project:e.target.value}))} style={inp}>
                 <option value="">— None (no project) —</option>
                 {projects.map(p=><option key={p.id} value={p.id}>{p.name}{p.client_name_snapshot?` — ${p.client_name_snapshot}`:""}</option>)}
               </select>
-            ) : (
-              <input value={form.client_name_direct||""} onChange={e=>setForm(p=>({...p,client_name_direct:e.target.value}))}
-                style={inp} placeholder="e.g. Rahul Sharma or ABC Technologies"/>
             )}
-            <p style={{fontSize:11,color:"#94a3b8",margin:"5px 0 0"}}>
-              {(!form._projectMode||form._projectMode==="select") ? "Select from existing projects, or switch to 'Enter Name' to type directly" : "This name will appear on the quotation as the client"}
-            </p>
+
+            {/* Enter Name mode */}
+            {form._projectMode==="name" && (
+              <input value={form.client_name_direct||""} onChange={e=>setForm(p=>({...p,client_name_direct:e.target.value}))}
+                style={inp} placeholder="e.g. Rahul Sharma / ABC Technologies"/>
+            )}
+
+            {/* New Client mode — inline form */}
+            {form._projectMode==="new_client" && (
+              <div style={{ border:"1.5px solid #ddd6fe",borderRadius:12,padding:18,background:"#faf5ff" }}>
+                {clientDone && createdClient ? (
+                  <div style={{ padding:"12px 14px",background:"#dcfce7",borderRadius:8,border:"1px solid #bbf7d0",display:"flex",justifyContent:"space-between",alignItems:"center" }}>
+                    <div>
+                      <div style={{ fontSize:13,fontWeight:700,color:"#15803d" }}>✅ Client created!</div>
+                      <div style={{ fontSize:11,color:"#16a34a" }}>{createdClient.full_name} {createdClient.company_name?`(${createdClient.company_name})`:""}</div>
+                    </div>
+                    <button type="button" onClick={()=>{setClientDone(false);setNewClient({...EMPTY_CLIENT});}} style={{ fontSize:11,color:"#7c3aed",background:"none",border:"none",cursor:"pointer",fontWeight:600 }}>Edit</button>
+                  </div>
+                ) : (
+                  <>
+                    {clientErr && <div style={{ background:"#fee2e2",color:"#dc2626",padding:"9px 13px",borderRadius:7,fontSize:12,marginBottom:12 }}>{clientErr}</div>}
+
+                    <p style={{ fontSize:11,fontWeight:700,color:"#7c3aed",textTransform:"uppercase",letterSpacing:".06em",margin:"0 0 12px",display:"flex",alignItems:"center",gap:6 }}>
+                      <UserPlus size={13}/> Add New Client
+                    </p>
+
+                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10 }}>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Full Name <span style={{color:"#ef4444"}}>*</span></label>
+                        <input value={newClient.full_name} onChange={e=>setNewClient(p=>({...p,full_name:e.target.value}))} placeholder="Rahul Sharma" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Company Name</label>
+                        <input value={newClient.company_name} onChange={e=>setNewClient(p=>({...p,company_name:e.target.value}))} placeholder="ABC Technologies" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Email</label>
+                        <input type="email" value={newClient.email} onChange={e=>setNewClient(p=>({...p,email:e.target.value}))} placeholder="rahul@abc.com" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Phone <span style={{color:"#ef4444"}}>*</span></label>
+                        <input value={newClient.phone} onChange={e=>setNewClient(p=>({...p,phone:e.target.value}))} placeholder="98765 43210" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom:10 }}>
+                      <label style={{...lbl,fontSize:11}}>Billing Address <span style={{color:"#ef4444"}}>*</span></label>
+                      <input value={newClient.billing_address} onChange={e=>setNewClient(p=>({...p,billing_address:e.target.value}))} placeholder="123, MG Road, Bengaluru" style={{...inp,padding:"8px 10px"}}/>
+                    </div>
+
+                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10 }}>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>City</label>
+                        <input value={newClient.city} onChange={e=>setNewClient(p=>({...p,city:e.target.value}))} placeholder="Bengaluru" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>State</label>
+                        <select value={newClient.state} onChange={e=>setNewClient(p=>({...p,state:e.target.value}))} style={{...inp,padding:"8px 10px"}}>
+                          <option value="">Select…</option>
+                          {INDIA_STATES.map(s=><option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>GSTIN</label>
+                        <input value={newClient.gstin} onChange={e=>setNewClient(p=>({...p,gstin:e.target.value.toUpperCase()}))} placeholder="29ABCDE1234F1Z5" style={{...inp,padding:"8px 10px",textTransform:"uppercase",letterSpacing:".04em"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Website</label>
+                        <input value={newClient.website} onChange={e=>setNewClient(p=>({...p,website:e.target.value}))} placeholder="https://abc.com" style={{...inp,padding:"8px 10px"}}/>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Client Type</label>
+                        <select value={newClient.client_type} onChange={e=>setNewClient(p=>({...p,client_type:e.target.value}))} style={{...inp,padding:"8px 10px"}}>
+                          <option value="">Select…</option>
+                          {CLIENT_TYPES.filter(Boolean).map(t=><option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{...lbl,fontSize:11}}>Lead Source</label>
+                        <select value={newClient.lead_source} onChange={e=>setNewClient(p=>({...p,lead_source:e.target.value}))} style={{...inp,padding:"8px 10px"}}>
+                          <option value="">Select…</option>
+                          {LEAD_SOURCES.filter(Boolean).map(s=><option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom:12 }}>
+                      <label style={{...lbl,fontSize:11}}>Social Handle</label>
+                      <input value={newClient.social_handle} onChange={e=>setNewClient(p=>({...p,social_handle:e.target.value}))} placeholder="@abctechnologies" style={{...inp,padding:"8px 10px"}}/>
+                    </div>
+
+                    <div style={{ marginBottom:14 }}>
+                      <label style={{...lbl,fontSize:11}}>Notes</label>
+                      <textarea value={newClient.notes} onChange={e=>setNewClient(p=>({...p,notes:e.target.value}))} rows={2} placeholder="Any additional notes…" style={{...inp,resize:"vertical",padding:"8px 10px"}}/>
+                    </div>
+
+                    <button type="button" onClick={handleCreateClient} disabled={savingClient}
+                      style={{ width:"100%",padding:"9px",background:savingClient?"#ddd6fe":"linear-gradient(135deg,#7c3aed,#6d28d9)",color:"#fff",border:"none",borderRadius:8,fontSize:12,fontWeight:700,cursor:savingClient?"not-allowed":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:6 }}>
+                      <UserPlus size={13}/> {savingClient ? "Creating Client…" : "Create Client & Link to Quotation"}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {form._projectMode==="select" && (
+              <p style={{fontSize:11,color:"#94a3b8",margin:"5px 0 0"}}>Select from existing projects, or switch to 'Enter Name' to type directly</p>
+            )}
           </div>
             <div>
               <label style={lbl}>Valid Until</label>

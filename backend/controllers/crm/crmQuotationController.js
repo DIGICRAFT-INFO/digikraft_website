@@ -94,7 +94,7 @@ exports.create = async (req, res) => {
       ...rest
     } = req.body;
 
-    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
+    const project = (projectId && projectId.trim()) ? await CrmProject.findById(projectId).populate('client') : null;
     const quote_number = await genQuoteNumber(settings);
     const totals = calcTotals(items, discount_type, discount_value, cgst_rate, sgst_rate, igst_rate);
 

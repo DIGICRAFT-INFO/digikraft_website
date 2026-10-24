@@ -71,6 +71,8 @@ export default function EditQuotationPage() {
     e.preventDefault(); setSaving(true); setErr(""); setSaveOk("");
     try {
       const { _projectMode, ...payload } = form;
+      // Fix: empty string project causes CastError on backend
+      if (!payload.project || payload.project === "") payload.project = null;
       await CRM_API.patch(`/quotations/${id}`, { ...payload, items: items.filter(i=>i.description) });
       setSaveOk("Saved!"); setTimeout(()=>setSaveOk(""),3000);
     } catch (ex) { setErr(ex.response?.data?.message||"Save failed"); }

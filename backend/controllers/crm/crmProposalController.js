@@ -64,7 +64,7 @@ exports.create = async (req, res) => {
     const settings = await getSettings();
     const { project: projectId, client_name_direct, ...rest } = req.body;
 
-    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
+    const project = (projectId && projectId.trim()) ? await CrmProject.findById(projectId).populate('client') : null;
     const prop_number = await genPropNumber(settings);
 
     const client = project?.client

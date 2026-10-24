@@ -92,7 +92,7 @@ exports.create = async (req, res) => {
       rest.due_date = d.toISOString();
     }
 
-    const project = projectId ? await CrmProject.findById(projectId).populate('client') : null;
+    const project = (projectId && projectId.trim()) ? await CrmProject.findById(projectId).populate('client') : null;
     const invoice_number = await genInvNumber(settings);
     const totals = calcTotals(items, cgst_rate, sgst_rate, igst_rate);
 
